@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "URL Redirects & Cookies Analyzer",
-  "description": "Analyzes redirects and cookies for the current page.",
-  "version": "1.0",
+  "description": "Analyzes redirects, cookies, bandwidth, IP and CNAME for the current page.",
+  "version": "1.1",
   "permissions": [
     "cookies",
     "webRequest",

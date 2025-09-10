@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "URL Redirects & Cookies Analyzer",
+  "description": "Analyzes redirects and cookies for the current page.",
+  "version": "1.0",
+  "permissions": [
+    "cookies",
+    "webRequest",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze Page"
+  }
+}

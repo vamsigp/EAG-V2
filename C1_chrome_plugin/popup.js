@@ -12,20 +12,18 @@ async function getCurrentTab() {
 function showBandwidth(tabId) {
   chrome.runtime.sendMessage({ type: "getTabData", tabId }, (resp) => {
     let div = document.getElementById("bandwidth");
-    div.textContent = formatBytes(resp.bandwidth || 0);
+    div.textContent = formatBytes((resp && resp.bandwidth) || 0);
   });
 }
 
 function showRedirects(tabId) {
   chrome.runtime.sendMessage({ type: "getTabData", tabId }, (resp) => {
     let div = document.getElementById("redirects");
-    let redirects = resp.redirects || [];
+    let redirects = (resp && resp.redirects) || [];
     if (!redirects.length) {
       div.textContent = "No redirects detected for this tab session.";
     } else {
-      let html = "<ol>";
-      for (let url of redirects) html += `<li><code>${url}</code></li>`;
-      html += "</ol>";
+      let html = "<ol>" + redirects.map(url => `<li><code>${url}</code></li>`).join('') + "</ol>";
       div.innerHTML = html;
     }
   });
@@ -36,7 +34,10 @@ function showCookies(tab) {
   let domain;
   try {
     domain = (new URL(url)).hostname;
-  } catch { return; }
+  } catch {
+    document.getElementById("cookies").textContent = "Invalid URL";
+    return;
+  }
 
   chrome.cookies.getAll({domain}, function(cookies) {
     let div = document.getElementById("cookies");
@@ -62,9 +63,7 @@ function showCookies(tab) {
   });
 }
 
-// Get IP and CNAME via a DNS over HTTPS API
 async function getDNSInfo(hostname) {
-  // Google DNS over HTTPS API
   const url = `https://dns.google.com/resolve?name=${hostname}&type=ANY`;
   try {
     let resp = await fetch(url);
@@ -104,10 +103,70 @@ async function showDNS(tab) {
     : '(No CNAME record found)';
 }
 
-// Main
+async function getSSLInfo(hostname) {
+  const url = `https://api.ssllabs.com/api/v3/analyze?host=${hostname}&fromCache=on&all=done`;
+  try {
+    let resp = await fetch(url);
+    let data = await resp.json();
+    const endpoint = (data.endpoints && data.endpoints.length) ? data.endpoints[0] : null;
+    if (!endpoint || !endpoint.details) return null;
+    let protocols = endpoint.details.protocols
+      .map(p => p.name + (p.version ? (" " + p.version) : ""))
+      .join(', ');
+    let ciphers = endpoint.details.suites
+      .map(s => `${s.name}${s.q === 1 ? ' (default)' : ''}`)
+      .join(', ');
+    return {
+      tlsVersion: protocols,
+      ciphers: ciphers
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+async function showTLS(tab) {
+  let url = tab.url;
+  let hostname;
+  try {
+    hostname = (new URL(url)).hostname;
+  } catch {
+    return;
+  }
+  let divTLS = document.getElementById("tls");
+  divTLS.textContent = 'Resolving...';
+  let info = await getSSLInfo(hostname);
+  if (!info) {
+    divTLS.textContent = 'TLS info not available (site may be private, slow, or blocked for scanning).';
+  } else {
+    divTLS.innerHTML = `
+      <b>TLS Versions Supported:</b> ${info.tlsVersion}<br/>
+      <b>Cipher Suites Offered:</b> ${info.ciphers}
+    `;
+  }
+}
+
+function showAnalytics(tab) {
+  let div = document.getElementById("analytics");
+  chrome.tabs.sendMessage(tab.id, {type: "analytics-check"}, response => {
+    if (chrome.runtime.lastError) {
+      div.textContent = "(Unable to analyze: permission or access error)";
+      return;
+    }
+    const providers = response && response.providers ? response.providers : [];
+    if (!providers.length) {
+      div.textContent = "No major analytics providers detected.";
+    } else {
+      div.innerHTML = `<ul>${providers.map(p => `<li>${p}</li>`).join('')}</ul>`;
+    }
+  });
+}
+
 getCurrentTab().then(tab => {
   showBandwidth(tab.id);
   showRedirects(tab.id);
   showCookies(tab);
   showDNS(tab);
+  showTLS(tab);
+  showAnalytics(tab);
 });

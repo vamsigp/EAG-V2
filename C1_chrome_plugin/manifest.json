@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "URL Redirects & Cookies Analyzer",
-  "description": "Analyzes redirects, cookies, bandwidth, IP and CNAME for the current page.",
-  "version": "1.1",
+  "name": "URL Redirects & Cookies & Analytics Analyzer",
+  "description": "Analyzes redirects, cookies, bandwidth, IP, CNAME, TLS info and detects analytics providers on the current page.",
+  "version": "1.3",
   "permissions": [
     "cookies",
     "webRequest",
     "storage",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -18,5 +19,12 @@
   "action": {
     "default_popup": "popup.html",
     "default_title": "Analyze Page"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

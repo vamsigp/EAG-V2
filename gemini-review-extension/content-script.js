@@ -103,7 +103,7 @@ function insertSidebar() {
       try {
         const prompt = `You are a senior software engineer. Please review the following ${ext} source code for bugs, best practices, code style and improvement opportunities. Reply in markdown with clear sections for summary, possible issues, suggestions, and praise.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
         const response = await fetch(
-          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey,
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey,
           {
             method: "POST",
             headers: {"Content-Type": "application/json"},

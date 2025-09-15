@@ -9,7 +9,6 @@ document.getElementById("save-key").onclick = function() {
   });
 };
 
-// Autofill if present
 chrome.storage.sync.get(["gemini_api_key"], function(result) {
   if (result.gemini_api_key) {
     document.getElementById("api-key").value = result.gemini_api_key;

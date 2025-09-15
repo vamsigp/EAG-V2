@@ -1,12 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Gemini Code Review Extension",
-  "description": "Review GitHub source code files with Gemini Flash 2.0 AI.",
+  "description": "Reviews GitHub code files with Gemini Flash 2.0, rendered beautifully.",
   "version": "1.0",
   "permissions": [
     "activeTab",
-    "storage",
-    "scripting"
+    "storage"
   ],
   "host_permissions": [
     "https://github.com/*"
@@ -14,7 +13,7 @@
   "content_scripts": [
     {
       "matches": ["https://github.com/*/blob/*"],
-      "js": ["content-script.js"],
+      "js": ["marked.min.js", "content-script.js"],
       "run_at": "document_idle"
     }
   ],

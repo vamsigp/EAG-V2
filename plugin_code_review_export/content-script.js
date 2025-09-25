@@ -363,26 +363,33 @@ function buildPrompt(tabKey, ext, code) {
   return `Review code:\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
 }
 async function callGeminiAPI(prompt, apiKey) {
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_API_MODEL}:generateContent?key=${apiKey}`,
+  return new Promise((resolve) => {
+    console.log('[Gemini CS] Sending Gemini API request', { prompt, apiKey: apiKey ? '***' : undefined });
+    chrome.runtime.sendMessage(
       {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        type: "GEMINI_API_REQUEST",
+        prompt,
+        apiKey,
+        model: GEMINI_API_MODEL
+      },
+      (response) => {
+        console.log('[Gemini CS] Received Gemini API response', response);
+        if (!response || !response.success) {
+          resolve("Error: " + (response && response.error ? response.error : "Unknown error"));
+          return;
+        }
+        const data = response.data;
+        if (
+          data && data.candidates && data.candidates[0] &&
+          data.candidates[0].content && data.candidates[0].content.parts[0]
+        ) {
+          resolve(data.candidates[0].content.parts[0].text);
+        } else {
+          resolve("No response from Gemini.");
+        }
       }
     );
-    const data = await response.json();
-    if (
-      data && data.candidates && data.candidates[0] &&
-      data.candidates[0].content && data.candidates[0].content.parts[0]
-    ) {
-      return data.candidates[0].content.parts[0].text;
-    }
-    return "No response from Gemini.";
-  } catch(e) {
-    return "Error: " + e;
-  }
+  });
 }
 
 // ===== BOOTSTRAP =====

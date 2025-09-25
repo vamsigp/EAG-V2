@@ -1,5 +1,6 @@
 const EXTENSIONS = [".kt", ".java", ".cpp", ".c", ".py", ".gradle.kts", ".gradle"];
 
+// Helper
 function getFileExtension() {
   const parts = window.location.pathname.split("/");
   if (parts.length < 6) return null;
@@ -16,16 +17,46 @@ function extractSourceCode() {
   return null;
 }
 
+function insertFloatingButton() {
+  if (document.getElementById("gemini-review-float-btn")) return;
+  const btn = document.createElement("button");
+  btn.id = "gemini-review-float-btn";
+  btn.textContent = "🌟 Review with Gemini";
+  btn.style = `
+    position: fixed; bottom: 34px; right: 34px; z-index:10050; padding:15px 18px;
+    background: #3276e3; color: #fff; font-weight:600; border:none; 
+    border-radius:14px; font-size:1.15em; box-shadow: 0 8px 22px -5px #8883; cursor:pointer; 
+    transition: background 0.2s; outline:none;
+  `;
+  btn.onmouseenter = () => { btn.style.background = "#225bb0"; };
+  btn.onmouseleave = () => { btn.style.background = "#3276e3"; };
+  btn.onclick = () => showGeminiSidebar();
+  document.body.appendChild(btn);
+}
+
+function showGeminiSidebar() {
+  let sidebar = document.getElementById("gemini-review-sidebar");
+  if (sidebar) {
+    sidebar.style.display = "block";
+    return;
+  }
+  if (getFileExtension()) {
+    insertSidebar();
+  }
+}
+
 function insertSidebar() {
-  if (document.getElementById("gemini-review-sidebar")) return;
-  
-  // Create Sidebar
+  // If sidebar already exists, just .show
+  let oldSidebar = document.getElementById("gemini-review-sidebar");
+  if (oldSidebar) {
+    oldSidebar.style.display = "block";
+    return;
+  }
+  // Create Sidebar (as before)
   const sidebar = document.createElement("div");
   sidebar.id = "gemini-review-sidebar";
-  // Left drag handle (visible)
   sidebar.innerHTML = `
-    <div id="left-resize-handle" style="
-      width:12px; height:100%; position:absolute; left:0; top:0; z-index:10010; cursor:ew-resize;
+    <div id="left-resize-handle" style="width:12px; height:100%; position:absolute; left:0; top:0; z-index:10010; cursor:ew-resize;
       background:transparent; display:flex; align-items:center; justify-content:center;">
       <div style="width:6px;height:44px; background:#e7ecf1; border-radius:9px; margin-left:2px; margin-top:4px;opacity:0.7;"></div>
     </div>
@@ -44,10 +75,9 @@ function insertSidebar() {
     font-family: 'Segoe UI', 'Roboto', Arial,sans-serif;
     display: flex; flex-direction: column;
     overflow: visible; transition: width 0.1s;`;
-
   document.body.appendChild(sidebar);
 
-  // Setup left drag handle for resizing
+  // Left drag handle for resizing
   const leftHandle = sidebar.querySelector('#left-resize-handle');
   let isDragging = false, startX = 0, startW = 0;
   leftHandle.addEventListener('mousedown', function(e) {
@@ -83,48 +113,31 @@ function insertSidebar() {
     #gemini-review-close:hover { background:#e0e3eb; }
     #gemini-review-submit { margin: 16px auto 10px auto; display:block; background: #3276e3; color:#fff; border:none; font-size:1em; border-radius:7px; padding:8px 22px; cursor:pointer; box-shadow: 0 2px 8px -2px #3276e333; }
     #gemini-review-submit:hover { background: #225bb0;}
-    /* Progress steps */
     #gemini-review-progress { margin: 12px 17px 0 17px; display: flex; flex-direction: column; gap: 7px;}
-    .step-row {
-      display: flex; align-items: center; gap:9px; font-size:1.05em; margin-bottom:0px; padding: 3px 0;
-    }
-    .step-spinner {
-      width:18px; height:18px; display:inline-block; border:3px solid #b8dcf8; border-top:3px solid #25aecd; border-radius:50%; animation:spin 0.9s linear infinite;
-      margin-right:3px; vertical-align: middle;
-    }
+    .step-row { display: flex; align-items: center; gap:9px; font-size:1.05em; margin-bottom:0px; padding: 3px 0; }
+    .step-spinner { width:18px; height:18px; display:inline-block; border:3px solid #b8dcf8; border-top:3px solid #25aecd; border-radius:50%; animation:spin 0.9s linear infinite; margin-right:3px; vertical-align: middle;}
     @keyframes spin { 100% { transform:rotate(360deg); } }
     .step-done { color:#1bcb25; font-weight:bold; font-size:1.25em; margin-right: -3px;}
     .step-timer { font-size: 0.97em; color:#888; margin-left:6px;}
-    /* Results */
     #gemini-review-content { margin:12px 15px 15px 15px; overflow-y: auto; flex-grow: 1; background:#fafbfc; border-radius:10px; padding:18px; border:1px solid #eee; min-height:110px; max-height:60vh; box-shadow: 0 2px 8px 0 #f0f0f4;}
     #gemini-review-content h1, #gemini-review-content h2, #gemini-review-content h3 { color:#3276e3; font-weight:700 !important; margin-top:18px; margin-bottom:8px; font-family:inherit;}
     #gemini-review-content p { margin: 10px 0; font-size: 1.04em;}
     #gemini-review-content ul { margin-top:8px; margin-left:1.2em;}
     #gemini-review-content li { margin-bottom:7px; font-size:1.03em;}
     #gemini-review-content strong { color: #225bb0; font-weight: bold;}
-    #gemini-review-content code, #gemini-review-content pre {
-      background: #f4f2fa;
-      border-radius: 5px;
-      padding: 7px;
-      font-size: 0.98em;
-      font-family: 'Fira Mono', 'Consolas', 'Monaco', monospace;
-      color: #222;
-    }
+    #gemini-review-content code, #gemini-review-content pre { background: #f4f2fa; border-radius: 5px; padding: 7px; font-size: 0.98em; font-family: 'Fira Mono', 'Consolas', 'Monaco', monospace; color: #222;}
     #gemini-review-content pre { overflow-x: auto; margin-top:12px;}
-    #gemini-review-content blockquote {
-      border-left: 3px solid #c7dfe6;
-      padding-left:12px; margin:10px 0; color:#666; background: #f6f7fa; border-radius:4px;
-    }
+    #gemini-review-content blockquote { border-left: 3px solid #c7dfe6; padding-left:12px; margin:10px 0; color:#666; background: #f6f7fa; border-radius:4px;}
     #gemini-review-content table { border-collapse: collapse; margin-top:14px;}
     #gemini-review-content th, #gemini-review-content td { border:1px solid #ddd; padding:5px 11px; font-size: 0.98em; }
     #left-resize-handle { background:transparent; }
     #left-resize-handle:hover > div { background:#d1eafe; opacity:0.9;}
+    #gemini-review-float-btn { }
   `;
   document.head.appendChild(styleTag);
 
   document.getElementById("gemini-review-close").onclick = function() {
-    sidebar.remove();
-    styleTag.remove();
+    sidebar.style.display = "none"; // << HIDE instead of remove
   };
 
   document.getElementById("gemini-review-submit").onclick = function() {
@@ -149,7 +162,7 @@ function insertSidebar() {
   };
 }
 
-// Review chain
+// Review chain -- unchanged
 const geminiTasks = [
   {
     name: "Style Review",
@@ -179,23 +192,17 @@ async function runGeminiChain(ext, code, apiKey, reviewContent, progressDiv) {
   ).join('');
   for (let i = 0; i < geminiTasks.length; ++i) {
     const task = geminiTasks[i];
-    // Previous steps -- set checkmark and elapsed seconds
     if (i > 0) {
       document.getElementById(`spinner-${i-1}`).style.display = "none";
       document.getElementById(`step-row-${i-1}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
-      // Timer stays, set font color to green on step-timer
       document.getElementById(`step-timer-${i-1}`).style.color = "#139c13";
     }
     document.getElementById(`step-label-${i}`).style.fontWeight = "bold";
-
-    // Time the API call
     const t0 = performance.now();
     const reply = await callGeminiAPI(task.prompt(ext, code), apiKey);
     const t1 = performance.now();
     const seconds = ((t1 - t0)/1000).toFixed(2);
-
     document.getElementById(`step-timer-${i}`).textContent = `(${seconds}s)`;
-
     reviewContent.innerHTML += `<div style="margin-top:10px;margin-bottom:28px;padding:11px 13px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
       <h2 style="margin-bottom:11px;color:#267bdb">${task.name}</h2>
       ${marked.parse(reply)}
@@ -211,7 +218,7 @@ async function runGeminiChain(ext, code, apiKey, reviewContent, progressDiv) {
 
 async function callGeminiAPI(prompt, apiKey) {
   try {
-    // Use gemini-2.0-flash (if publicly available, else revert to gemini-1.5-flash)
+    // Use gemini-2.0-flash if available, else fallback
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey,
       {
@@ -230,6 +237,7 @@ async function callGeminiAPI(prompt, apiKey) {
   }
 }
 
+// On supported page, always show floating button
 if (getFileExtension()) {
-  insertSidebar();
+  insertFloatingButton();
 }

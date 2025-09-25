@@ -204,31 +204,54 @@ async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv) {
       <span class="step-spinner" id="spinner-${tab.key}"></span>
       <span id="step-label-${tab.key}">${tab.name}</span>
       <span class="step-timer" id="step-timer-${tab.key}"></span>
-    </div>`).join('');
-  for (let i = 0; i < GEMINI_TABS.length; ++i) {
-    const tab = GEMINI_TABS[i];
-    if (i > 0) {
-      document.getElementById(`spinner-${GEMINI_TABS[i-1].key}`).style.display = "none";
-      document.getElementById(`step-row-${GEMINI_TABS[i-1].key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
-      document.getElementById(`step-timer-${GEMINI_TABS[i-1].key}`).style.color = "#139c13";
-    }
-    document.getElementById(`step-label-${tab.key}`).style.fontWeight = "bold";
+    </div>`
+  ).join('');
+
+  // Parallel for first 3
+  const apiKeysExceptSummary = GEMINI_TABS.slice(0, 3);
+
+  // Launch all three set of API calls in parallel
+  const parallelPromises = apiKeysExceptSummary.map(tab => {
     const t0 = performance.now();
-    const reply = await callGeminiAPI(getGeminiPrompt(tab.key, ext, code), apiKey); // see next function
-    const t1 = performance.now();
-    const seconds = ((t1 - t0)/1000).toFixed(2);
-    document.getElementById(`step-timer-${tab.key}`).textContent = `(${seconds}s)`;
-    window.geminiTabResults[tab.key] = `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
-      <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
+    return callGeminiAPI(getGeminiPrompt(tab.key, ext, code), apiKey)
+      .then(reply => {
+        const t1 = performance.now();
+        const seconds = ((t1 - t0)/1000).toFixed(2);
+        document.getElementById(`step-timer-${tab.key}`).textContent = `(${seconds}s)`;
+        document.getElementById(`spinner-${tab.key}`).style.display = "none";
+        document.getElementById(`step-row-${tab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
+        document.getElementById(`step-label-${tab.key}`).style.fontWeight = "bold";
+        document.getElementById(`step-timer-${tab.key}`).style.color = "#139c13";
+        window.geminiTabResults[tab.key] =
+          `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
+              <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
+              ${marked.parse(reply)}
+            </div>`;
+        // default show first tab content instantly
+        if (tab.key === GEMINI_TABS[0].key) document.getElementById('gemini-tab-content').innerHTML = window.geminiTabResults[tab.key];
+      });
+  });
+
+  // Wait till all three are done
+  await Promise.all(parallelPromises);
+
+  // Sequentially run summary tab after others have completed
+  const summaryTab = GEMINI_TABS[3];
+  const t0 = performance.now();
+  const reply = await callGeminiAPI(getGeminiPrompt(summaryTab.key, ext, code), apiKey);
+  const t1 = performance.now();
+  const seconds = ((t1 - t0)/1000).toFixed(2);
+  document.getElementById(`step-timer-${summaryTab.key}`).textContent = `(${seconds}s)`;
+  document.getElementById(`spinner-${summaryTab.key}`).style.display = "none";
+  document.getElementById(`step-row-${summaryTab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
+  document.getElementById(`step-label-${summaryTab.key}`).style.fontWeight = "bold";
+  document.getElementById(`step-timer-${summaryTab.key}`).style.color = "#139c13";
+  window.geminiTabResults[summaryTab.key] =
+    `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
+      <h2 style="margin-bottom:11px;color:#267bdb">${summaryTab.name}</h2>
       ${marked.parse(reply)}
-      </div>`;
-    if (i === 0) document.getElementById('gemini-tab-content').innerHTML = window.geminiTabResults[tab.key];
-  }
-  let lastKey = GEMINI_TABS[GEMINI_TABS.length-1].key;
-  document.getElementById(`spinner-${lastKey}`).style.display = "none";
-  document.getElementById(`step-row-${lastKey}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
-  document.getElementById(`step-label-${lastKey}`).style.fontWeight = "bold";
-  document.getElementById(`step-timer-${lastKey}`).style.color = "#139c13";
+    </div>`;
+
   progressDiv.innerHTML += `<div style="margin-top:12px;color:green;font-size:1.08em;"><b>All reviews completed!</b></div>`;
 }
 

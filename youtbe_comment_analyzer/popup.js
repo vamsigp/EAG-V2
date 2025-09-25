@@ -2,9 +2,18 @@
 let analyzedComments = [];
 let currentFilter = 'all';
 
+// Debug: Log any errors
+window.addEventListener('error', (e) => {
+  console.error('🚨 Global error:', e.error);
+});
+
+console.log('🚀 Popup script loaded');
+
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('📄 DOM Content Loaded');
   await initializePopup();
   setupEventListeners();
+  console.log('✅ Popup initialized');
 });
 
 async function initializePopup() {
@@ -33,10 +42,14 @@ function setupEventListeners() {
   document.getElementById('analyzeBtn').addEventListener('click', analyzeComments);
   document.getElementById('summarizeBtn').addEventListener('click', showSummary);
 
-  // Filter tabs
+  // Filter tabs (robust event delegation)
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
-      const filter = e.target.dataset.filter;
+      // Always get the closest .tab element (handles clicks on children)
+      const tabButton = e.target.closest('.tab');
+      if (!tabButton) return;
+      const filter = tabButton.dataset.filter;
+      console.log('🖱️ Tab clicked:', filter);
       setActiveFilter(filter);
       filterComments(filter);
     });
@@ -89,20 +102,31 @@ async function analyzeComments() {
     updateStatus('Analyzing with AI...', 'loading');
 
     // Send comments to background script for analysis
+    console.log('📤 Sending comments to background script:', response.comments.length);
     const analysis = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(
         { action: 'analyzeComments', comments: response.comments },
         (response) => {
+          console.log('📥 Received response from background:', response);
           if (response.error) {
+            console.error('❌ Background script error:', response.error);
             reject(new Error(response.error));
-          } else {
+          } else if (response.success && response.analysis) {
+            console.log('✅ Analysis successful:', response.analysis);
             resolve(response.analysis);
+          } else {
+            console.error('❌ Invalid response format:', response);
+            reject(new Error('Invalid response from background script'));
           }
         }
       );
     });
 
     analyzedComments = analysis;
+    console.log('📊 Analysis complete - total comments:', analyzedComments.length);
+    console.log('🔍 Sample analyzed comment:', analyzedComments[0]);
+    console.log('📝 All categories found:', [...new Set(analyzedComments.map(c => c.category))]);
+    
     displayComments(analyzedComments);
     updateCounts();
     
@@ -123,10 +147,14 @@ async function analyzeComments() {
 
 function displayComments(comments) {
   console.log('🎯 Displaying comments with filter:', currentFilter);
+  console.log('🎯 Total comments passed to display:', comments.length);
+  console.log('🎯 Comments array:', comments);
+  
   const container = document.getElementById('commentsContainer');
   const placeholder = document.getElementById('placeholder');
   
-  if (comments.length === 0) {
+  if (!comments || comments.length === 0) {
+    console.log('❌ No comments to display');
     placeholder.style.display = 'block';
     container.innerHTML = '';
     return;
@@ -168,7 +196,13 @@ function displayComments(comments) {
 
 function filterComments(filter) {
   console.log('🔍 Filtering comments by:', filter);
-  console.log('📝 Available categories:', analyzedComments.map(c => c.category));
+  console.log('� analyzedComments length:', analyzedComments ? analyzedComments.length : 'undefined');
+  console.log('🔍 analyzedComments:', analyzedComments);
+  
+  if (analyzedComments && analyzedComments.length > 0) {
+    console.log('�📝 Available categories:', analyzedComments.map(c => c.category));
+  }
+  
   currentFilter = filter;
   displayComments(analyzedComments);
 }

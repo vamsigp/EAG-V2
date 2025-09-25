@@ -6,7 +6,6 @@ const GEMINI_TABS = [
   { key: "summary", name: "Summary" }
 ];
 
-// --- Utility functions ---
 function getFileExtension() {
   const parts = window.location.pathname.split("/");
   if (parts.length < 6) return null;
@@ -27,12 +26,12 @@ function insertFloatingButton() {
   btn.textContent = "🌟 Review with Gemini";
   btn.style = `
     position: fixed; bottom: 34px; right: 34px; z-index:10050; padding:15px 18px;
-    background: #3276e3; color: #fff; font-weight:600; border:none;
+    background: #0a9556; color: #fff; font-weight:600; border:none;
     border-radius:14px; font-size:1.15em; box-shadow: 0 8px 22px -5px #8883; cursor:pointer;
     transition: background 0.2s; outline:none;
   `;
-  btn.onmouseenter = () => { btn.style.background = "#225bb0"; };
-  btn.onmouseleave = () => { btn.style.background = "#3276e3"; };
+  btn.onmouseenter = () => { btn.style.background = "#067946"; };
+  btn.onmouseleave = () => { btn.style.background = "#0a9556"; };
   btn.onclick = () => showGeminiSidebar();
   document.body.appendChild(btn);
 }
@@ -62,16 +61,16 @@ function insertSidebar() {
       <span class="gemini-title">Gemini AI Code Review</span>
       <button id="gemini-review-close" title="Close">&times;</button>
     </div>
-    <div style="display:flex; align-items:center; margin: 0 14px; margin-top:18px;">
-      <button id="gemini-review-submit" class="gemini-review-btn" style="background:#3276e3;color:#fff;font-weight:600;border:none;border-radius:7px;font-size:1em;padding:7px 19px;margin-right:12px;cursor:pointer;">Review this code</button>
-      <div id="gemini-tabs-bar" style="flex:1"></div>
-      <button id="gemini-export-btn" style="background:#f7f7fa;border:1px solid #bad1ed;color:#2988e2;border-radius:8px;font-size:1em;padding:7px 11px;cursor:pointer;box-shadow:0 2px 5px -2px #e7ecfa;margin-left:8px;">Export</button>
+    <button id="gemini-review-submit" class="gemini-review-btn" style="background:#0a9556;color:#fff;font-weight:700;border:none;border-radius:7px;font-size:1.1em;padding:11px 27px;margin:22px auto 0 auto;display:block;cursor:pointer;box-shadow:0 2px 8px -2px #35b68147;">Review this code</button>
+    <div id="gemini-tabs-bar-wrap" style="overflow-x:auto;overflow-y:hidden;margin: 14px 0 0 0;scrollbar-width:thin;background:#fff;border-radius:9px 9px 0 0;min-height:36px;">
+      <div id="gemini-tabs-bar" style="display:flex;min-width:340px;white-space:nowrap;"></div>
     </div>
     <div id="gemini-tab-content" class="gemini-review-content"></div>
     <div id="gemini-review-progress" style="margin-top:8px"></div>
+    <div id="gemini-export-area" style="margin:0;padding:0;height:32px;"></div>
   `;
   sidebar.style = `
-    position:fixed; top:60px; right:18px; min-width:350px; max-width:80vw; width:490px;
+    position:fixed; top:60px; right:18px; min-width:350px; max-width:80vw; width:520px;
     z-index:99999; height:92vh; background:#fff; color:#222; border:1px solid #e2e2e4;
     border-radius:13px; box-shadow:-2px 2px 22px -2px #0002; padding:0;
     font-family: 'Segoe UI', 'Roboto', Arial,sans-serif;
@@ -81,7 +80,6 @@ function insertSidebar() {
 
   // ---- LEFT RESIZE HANDLE -----
   const leftHandle = sidebar.querySelector('#left-resize-handle');
-  // Styling via CSS below
   let isDragging = false, startX = 0, startW = 0;
   leftHandle.addEventListener('mousedown', function(e) {
     isDragging = true;
@@ -105,7 +103,9 @@ function insertSidebar() {
 
   // ---- Tabs -----
   const tabsBar = sidebar.querySelector("#gemini-tabs-bar");
-  tabsBar.style = "display: flex; gap: 6px; font-size:1.03em;";
+  const tabsBarWrap = sidebar.querySelector("#gemini-tabs-bar-wrap");
+  tabsBarBarsCSS(tabsBar, tabsBarWrap);
+
   GEMINI_TABS.forEach((tab, i) => {
     const tbtn = document.createElement("button");
     tbtn.className = "gemini-tab-btn";
@@ -128,7 +128,7 @@ function insertSidebar() {
     sidebar.style.display = "none"; // just hide
   };
 
-  // Review button
+  // ---- Review Button Handler ----
   document.getElementById("gemini-review-submit").onclick = function() {
     const ext = getFileExtension();
     const code = extractSourceCode();
@@ -138,8 +138,9 @@ function insertSidebar() {
     }
     tabContent.innerHTML = "";
     document.getElementById("gemini-review-progress").innerHTML = "";
+    document.getElementById("gemini-export-area").innerHTML = ""; // Hide export until ready
     window.geminiTabResults = {}; // Store tab result data
-    window.geminiRawTabMd = {};   // Store raw markdown responses
+    window.geminiRawTabMd = {};
     showTab(GEMINI_TABS[0].key); // Show first tab
     Array.from(tabsBar.children).forEach((btn, idx) => {
       btn.style.background = idx === 0 ? "#fff" : "#f3f6fa";
@@ -150,17 +151,164 @@ function insertSidebar() {
         tabContent.textContent = "Gemini API key not set.";
         return;
       }
-      await runGeminiTabsChain(ext, code, apiKey, tabContent, document.getElementById("gemini-review-progress"));
+      await runGeminiTabsChain(
+        ext, code, apiKey, tabContent,
+        document.getElementById("gemini-review-progress"),
+        document.getElementById("gemini-export-area")
+      );
     });
   };
 
-  // --- Export button support ---
-  sidebar.querySelector("#gemini-export-btn").onclick = function() {
+  // ---- Export Button: Will be set visible in runGeminiTabsChain ----
+
+  // ---- CSS for sidebar, handle, tabs, content ----
+  const styleTag = document.createElement("style");
+  styleTag.textContent = `
+    #gemini-review-sidebar .gemini-review-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 11px 16px 10px 16px; border-bottom: 1px solid #eee; background: #f7f7fa;
+      border-radius:13px 13px 0 0;
+    }
+    #gemini-review-sidebar .gemini-title { font-weight: bold; font-size: 1.125rem; color: #3276e3; }
+    #gemini-review-close { background: #f2f2f2; border:none; color:#444; font-size:1.3em; cursor:pointer; padding: 0 0.46em; border-radius:8px;}
+    #gemini-review-close:hover { background:#e0e3eb;}
+    .gemini-tab-btn { min-width:67px;}
+    .gemini-tab-btn.active { background: #fff !important; border-bottom:2px solid #3276e3 !important;}
+    #gemini-review-progress { margin-top:14px; margin-left:14px; margin-right:14px;}
+    .step-row { display: flex; align-items: center; gap:10px; font-size:1.09em; margin-bottom:0px; padding: 3px 0;}
+    .step-spinner { width:18px; height:18px; display:inline-block; border:3px solid #b8dcf8; border-top:3px solid #25aecd; border-radius:50%; animation:spin 0.9s linear infinite; margin-right:3px; vertical-align: middle;}
+    @keyframes spin { 100% { transform:rotate(360deg); } }
+    .step-done { color:#1bcb25; font-weight:bold; font-size:1.25em; margin-right: -3px;}
+    .step-timer { font-size: 0.97em; color:#888; margin-left:6px;}
+    #left-resize-handle {
+      position: absolute;
+      left: 0; top: 0; width: 16px; height: 100%;
+      cursor: ew-resize; z-index: 11001;
+      display: flex; align-items: center;
+      background: transparent;
+    }
+    #left-resize-handle::after {
+      content: '';
+      width: 6px; height: 54px; min-height:54px;
+      background: #e7ecf1;
+      border-radius: 8px;
+      margin-left: 3px;
+      margin-top: 16px;
+      opacity: 0.7;
+      display: block;
+      transition: background 0.18s;
+    }
+    #left-resize-handle:hover::after {
+      background: #abd9f2; opacity: 0.93;
+    }
+    #gemini-tabs-bar-wrap {
+      overflow-x: auto !important;
+      overflow-y: hidden;
+      margin: 0 22px 0 22px;
+      background: #fff;
+      border-radius: 9px 9px 0 0;
+      scrollbar-width: thin;
+      min-height: 38px;
+      max-width:85vw;
+    }
+    #gemini-tabs-bar {
+      display: flex;
+      min-width: 320px;
+      white-space: nowrap;
+    }
+    #gemini-tabs-bar::-webkit-scrollbar,
+    #gemini-tabs-bar-wrap::-webkit-scrollbar {
+      height: 7px;
+      background: #e2e7f3;
+    }
+    #gemini-tabs-bar::-webkit-scrollbar-thumb,
+    #gemini-tabs-bar-wrap::-webkit-scrollbar-thumb {
+      background: #bad1ed;
+      border-radius: 7px;
+    }
+    #gemini-review-float-btn { }
+    #gemini-review-submit {background:#0a9556;color:#fff;font-weight:700;border:none;border-radius:7px;font-size:1.1em;padding:11px 27px;margin:22px auto 0 auto;display:block;cursor:pointer;box-shadow:0 2px 8px -2px #35b68147;}
+    #gemini-review-submit:hover { background: #067946; }
+  `;
+  document.head.appendChild(styleTag);
+
+  // ---- Tab switch function ----
+  window.showTab = function(tabKey) {
+    Array.from(tabsBar.children).forEach(btn => {
+      btn.className = 'gemini-tab-btn' + (btn.getAttribute('data-tab') === tabKey ? ' active' : '');
+      btn.style.background = btn.getAttribute('data-tab') === tabKey ? '#fff' : '#f3f6fa';
+      btn.style.borderBottom = btn.getAttribute('data-tab') === tabKey ? '2px solid #3276e3' : '2px solid #eee';
+    });
+    tabContent.innerHTML = window.geminiTabResults && window.geminiTabResults[tabKey]
+      ? window.geminiTabResults[tabKey]
+      : `<div style="margin-top:16px; color:#aaa; font-size:1.12em;"><b>Loading...</b></div>`;
+  };
+}
+
+function tabsBarBarsCSS(tabsBar, tabsBarWrap) {
+  tabsBarWrap.style.whiteSpace = "nowrap";
+  tabsBar.style.flex = "1";
+}
+
+async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv, exportArea) {
+  window.geminiTabResults = {};
+  window.geminiRawTabMd = {};
+  progressDiv.innerHTML = GEMINI_TABS.map(tab =>
+    `<div class="step-row" id="step-row-${tab.key}">
+      <span class="step-spinner" id="spinner-${tab.key}"></span>
+      <span id="step-label-${tab.key}">${tab.name}</span>
+      <span class="step-timer" id="step-timer-${tab.key}"></span>
+    </div>`).join('');
+  // Parallel for first 3
+  const firstThree = GEMINI_TABS.slice(0, 3);
+  const parallelPromises = firstThree.map(tab => {
+    const t0 = performance.now();
+    return callGeminiAPI(getGeminiPrompt(tab.key, ext, code), apiKey)
+      .then(reply => {
+        const t1 = performance.now();
+        const seconds = ((t1 - t0)/1000).toFixed(2);
+        document.getElementById(`step-timer-${tab.key}`).textContent = `(${seconds}s)`;
+        document.getElementById(`spinner-${tab.key}`).style.display = "none";
+        document.getElementById(`step-row-${tab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
+        document.getElementById(`step-label-${tab.key}`).style.fontWeight = "bold";
+        document.getElementById(`step-timer-${tab.key}`).style.color = "#139c13";
+        window.geminiTabResults[tab.key] =
+          `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
+              <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
+              ${marked.parse(reply)}
+            </div>`;
+        window.geminiRawTabMd[tab.key] = reply;
+        if (tab.key === GEMINI_TABS[0].key) document.getElementById('gemini-tab-content').innerHTML = window.geminiTabResults[tab.key];
+      });
+  });
+  await Promise.all(parallelPromises);
+
+  // Summary last
+  const summaryTab = GEMINI_TABS[3];
+  const t0 = performance.now();
+  const reply = await callGeminiAPI(getGeminiPrompt(summaryTab.key, ext, code), apiKey);
+  const t1 = performance.now();
+  const seconds = ((t1 - t0) / 1000).toFixed(2);
+  document.getElementById(`step-timer-${summaryTab.key}`).textContent = `(${seconds}s)`;
+  document.getElementById(`spinner-${summaryTab.key}`).style.display = "none";
+  document.getElementById(`step-row-${summaryTab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
+  document.getElementById(`step-label-${summaryTab.key}`).style.fontWeight = "bold";
+  document.getElementById(`step-timer-${summaryTab.key}`).style.color = "#139c13";
+  window.geminiTabResults[summaryTab.key] =
+    `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
+      <h2 style="margin-bottom:11px;color:#267bdb">${summaryTab.name}</h2>
+      ${marked.parse(reply)}
+    </div>`;
+  window.geminiRawTabMd[summaryTab.key] = reply;
+  progressDiv.innerHTML += `<div style="margin-top:12px;color:green;font-size:1.08em;"><b>All reviews completed!</b></div>`;
+
+  // Show export button on completion
+  exportArea.innerHTML = `<button id="gemini-export-btn" style="background:#f7f7fa;border:1px solid #bad1ed;color:#2988e2;border-radius:8px;font-size:1em;padding:9px 20px;cursor:pointer;box-shadow:0 2px 5px -2px #e7ecfa;float:right;margin:9px 24px 0 0;">Export</button>`;
+  exportArea.querySelector("#gemini-export-btn").onclick = function() {
     const exportType = prompt(
       "Export type:\n1 = TXT (all tabs)\n2 = PDF (all tabs)\n3 = Markdown (.md for all tabs)\n\n(Type 1, 2, or 3 then OK)"
     );
     if (!exportType) return;
-
     let txtContent = "", htmlContent = "", mdContent = "";
     for (let tab of GEMINI_TABS) {
       let tabHtml = window.geminiTabResults && window.geminiTabResults[tab.key] ? window.geminiTabResults[tab.key] : "";
@@ -220,121 +368,8 @@ function insertSidebar() {
       alert("Export type not recognized.");
     }
   };
-
-  // ---- CSS for sidebar, handle, tabs, content ----
-  const styleTag = document.createElement("style");
-  styleTag.textContent = `
-    #gemini-review-sidebar .gemini-review-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 11px 16px 10px 16px; border-bottom: 1px solid #eee; background: #f7f7fa;
-      border-radius:13px 13px 0 0;
-    }
-    #gemini-review-sidebar .gemini-title { font-weight: bold; font-size: 1.125rem; color: #3276e3; }
-    #gemini-review-close { background: #f2f2f2; border:none; color:#444; font-size:1.3em; cursor:pointer; padding: 0 0.46em; border-radius:8px;}
-    #gemini-review-close:hover { background:#e0e3eb;}
-    .gemini-tab-btn { min-width:67px;}
-    .gemini-tab-btn.active { background: #fff !important; border-bottom:2px solid #3276e3 !important;}
-    #gemini-review-progress { margin-top:14px; margin-left:14px; margin-right:14px;}
-    .step-row { display: flex; align-items: center; gap:10px; font-size:1.09em; margin-bottom:0px; padding: 3px 0;}
-    .step-spinner { width:18px; height:18px; display:inline-block; border:3px solid #b8dcf8; border-top:3px solid #25aecd; border-radius:50%; animation:spin 0.9s linear infinite; margin-right:3px; vertical-align: middle;}
-    @keyframes spin { 100% { transform:rotate(360deg); } }
-    .step-done { color:#1bcb25; font-weight:bold; font-size:1.25em; margin-right: -3px;}
-    .step-timer { font-size: 0.97em; color:#888; margin-left:6px;}
-    #left-resize-handle {
-      position: absolute;
-      left: 0; top: 0; width: 16px; height: 100%;
-      cursor: ew-resize; z-index: 11001;
-      display: flex; align-items: center;
-      background: transparent;
-    }
-    #left-resize-handle::after {
-      content: '';
-      width: 6px; height: 54px; min-height:54px;
-      background: #e7ecf1;
-      border-radius: 8px;
-      margin-left: 3px;
-      margin-top: 16px;
-      opacity: 0.7;
-      display: block;
-      transition: background 0.18s;
-    }
-    #left-resize-handle:hover::after {
-      background: #abd9f2; opacity: 0.93;
-    }
-    #gemini-review-float-btn { }
-    #gemini-review-submit { background:#3276e3;color:#fff;font-weight:600;border:none;border-radius:7px;font-size:1em;padding:7px 19px;margin-right:12px;cursor:pointer; }
-    #gemini-review-submit:hover { background: #225bb0; }
-  `;
-  document.head.appendChild(styleTag);
-
-  // ---- Tab switch function ----
-  window.showTab = function(tabKey) {
-    Array.from(tabsBar.children).forEach(btn => {
-      btn.className = 'gemini-tab-btn' + (btn.getAttribute('data-tab') === tabKey ? ' active' : '');
-      btn.style.background = btn.getAttribute('data-tab') === tabKey ? '#fff' : '#f3f6fa';
-      btn.style.borderBottom = btn.getAttribute('data-tab') === tabKey ? '2px solid #3276e3' : '2px solid #eee';
-    });
-    tabContent.innerHTML = window.geminiTabResults && window.geminiTabResults[tabKey]
-      ? window.geminiTabResults[tabKey]
-      : `<div style="margin-top:16px; color:#aaa; font-size:1.12em;"><b>Loading...</b></div>`;
-  };
 }
 
-// --- Gemini review logic: first 3 parallel, summary sequential ---
-async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv) {
-  window.geminiTabResults = {};
-  window.geminiRawTabMd = {};
-  progressDiv.innerHTML = GEMINI_TABS.map((tab, i) =>
-    `<div class="step-row" id="step-row-${tab.key}">
-      <span class="step-spinner" id="spinner-${tab.key}"></span>
-      <span id="step-label-${tab.key}">${tab.name}</span>
-      <span class="step-timer" id="step-timer-${tab.key}"></span>
-    </div>`).join('');
-  // Parallel for first 3
-  const firstThree = GEMINI_TABS.slice(0, 3);
-  const parallelPromises = firstThree.map(tab => {
-    const t0 = performance.now();
-    return callGeminiAPI(getGeminiPrompt(tab.key, ext, code), apiKey)
-      .then(reply => {
-        const t1 = performance.now();
-        const seconds = ((t1 - t0)/1000).toFixed(2);
-        document.getElementById(`step-timer-${tab.key}`).textContent = `(${seconds}s)`;
-        document.getElementById(`spinner-${tab.key}`).style.display = "none";
-        document.getElementById(`step-row-${tab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
-        document.getElementById(`step-label-${tab.key}`).style.fontWeight = "bold";
-        document.getElementById(`step-timer-${tab.key}`).style.color = "#139c13";
-        window.geminiTabResults[tab.key] =
-          `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
-              <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
-              ${marked.parse(reply)}
-            </div>`;
-        window.geminiRawTabMd[tab.key] = reply;
-        if (tab.key === GEMINI_TABS[0].key) document.getElementById('gemini-tab-content').innerHTML = window.geminiTabResults[tab.key];
-      });
-  });
-  await Promise.all(parallelPromises);
-
-  // Summary last
-  const summaryTab = GEMINI_TABS[3];
-  const t0 = performance.now();
-  const reply = await callGeminiAPI(getGeminiPrompt(summaryTab.key, ext, code), apiKey);
-  const t1 = performance.now();
-  const seconds = ((t1 - t0) / 1000).toFixed(2);
-  document.getElementById(`step-timer-${summaryTab.key}`).textContent = `(${seconds}s)`;
-  document.getElementById(`spinner-${summaryTab.key}`).style.display = "none";
-  document.getElementById(`step-row-${summaryTab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
-  document.getElementById(`step-label-${summaryTab.key}`).style.fontWeight = "bold";
-  document.getElementById(`step-timer-${summaryTab.key}`).style.color = "#139c13";
-  window.geminiTabResults[summaryTab.key] =
-    `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
-      <h2 style="margin-bottom:11px;color:#267bdb">${summaryTab.name}</h2>
-      ${marked.parse(reply)}
-    </div>`;
-  window.geminiRawTabMd[summaryTab.key] = reply;
-  progressDiv.innerHTML += `<div style="margin-top:12px;color:green;font-size:1.08em;"><b>All reviews completed!</b></div>`;
-}
-
-// --- Prompts ---
 function getGeminiPrompt(tabKey, ext, code) {
   if (tabKey === "style") {
     return `Review this ${ext} code for style/readability. Formatting, conventions, naming, idioms, best practices. Markdown, sections for strengths & weaknesses.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
@@ -351,10 +386,9 @@ function getGeminiPrompt(tabKey, ext, code) {
   return `Review code:\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
 }
 
-// --- Gemini call ---
 async function callGeminiAPI(prompt, apiKey) {
   try {
-    // Use gemini-2.0-flash if available, else fallback
+    // Use gemini-2.0-flash if available
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey,
       {
@@ -373,7 +407,6 @@ async function callGeminiAPI(prompt, apiKey) {
   }
 }
 
-// --- On supported page, always show floating button ---
 if (getFileExtension()) {
   insertFloatingButton();
 }

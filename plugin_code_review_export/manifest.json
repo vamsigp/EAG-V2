@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Gemini Code Review Extension (Tabs, Export, Parallel)",
-  "description": "Multi-tab Gemini reviews for GitHub source files, with export and resizing.",
-  "version": "1.5",
+  "name": "Gemini Code Review Extension",
+  "description": "AI code review on GitHub with Gemini and polished UX.",
+  "version": "2.0",
   "permissions": [
     "storage",
     "activeTab"

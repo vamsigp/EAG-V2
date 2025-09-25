@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Comment Analyzer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <h1>Comment Analyzer</h1>
+        </div>
+        <div class="status" id="status">
+          <span class="status-indicator"></span>
+          <span class="status-text">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Configuration Section -->
+    <section class="config-section" id="configSection">
+      <div class="config-content">
+        <h3>🔑 API Configuration</h3>
+        <p>Enter your Gemini API key to start analyzing comments:</p>
+        <div class="input-group">
+          <input type="password" id="apiKeyInput" placeholder="Enter your Gemini API key">
+          <button id="saveApiKey" class="btn btn-primary">Save</button>
+        </div>
+        <p class="help-text">
+          <a href="https://makersuite.google.com/app/apikey" target="_blank">Get your free API key here</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- Main Interface -->
+    <main class="main-content" id="mainContent" style="display: none;">
+      <!-- Action Buttons -->
+      <section class="actions">
+        <button id="analyzeBtn" class="btn btn-primary btn-analyze">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+          </svg>
+          Analyze Comments
+        </button>
+        <button id="summarizeBtn" class="btn btn-secondary" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+          </svg>
+          Summarize Top 10
+        </button>
+      </section>
+
+      <!-- Filter Tabs -->
+      <section class="filter-tabs" id="filterTabs" style="display: none;">
+        <div class="tabs">
+          <button class="tab active" data-filter="all">
+            All <span class="count" id="allCount">0</span>
+          </button>
+          <button class="tab" data-filter="Good">
+            😊 Good <span class="count" id="goodCount">0</span>
+          </button>
+          <button class="tab" data-filter="Neutral">
+            😐 Neutral <span class="count" id="neutralCount">0</span>
+          </button>
+          <button class="tab" data-filter="Bad">
+            😞 Bad <span class="count" id="badCount">0</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Comments Display -->
+      <section class="comments-section">
+        <div class="comments-container" id="commentsContainer">
+          <div class="placeholder" id="placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+            <h3>No Comments Loaded</h3>
+            <p>Click "Analyze Comments" to start analyzing YouTube comments</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Summary Modal -->
+      <div class="modal" id="summaryModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>📋 Comments Summary</h3>
+            <button class="modal-close" id="closeSummary">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="loading" id="summaryLoading">
+              <div class="spinner"></div>
+              <p>Generating summary...</p>
+            </div>
+            <div class="summary-content" id="summaryContent"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Analyzing comments with AI...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+/* Content script styles */
+.yt-comment-analyzer-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin-left: 8px;
+  border: none;
+  border-radius: 18px;
+  background-color: #f1f3f4;
+  color: #030303;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Roboto", "Arial", sans-serif;
+}
+
+.yt-comment-analyzer-button:hover {
+  background-color: #e5e5e5;
+  transform: translateY(-1px);
+}
+
+.yt-comment-analyzer-button:active {
+  transform: translateY(0);
+  background-color: #d3d3d3;
+}
+
+.yt-comment-analyzer-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dark theme support */
+[dark] .yt-comment-analyzer-button,
+html[dark] .yt-comment-analyzer-button {
+  background-color: #272727;
+  color: #fff;
+}
+
+[dark] .yt-comment-analyzer-button:hover,
+html[dark] .yt-comment-analyzer-button:hover {
+  background-color: #3f3f3f;
+}
+
+[dark] .yt-comment-analyzer-button:active,
+html[dark] .yt-comment-analyzer-button:active {
+  background-color: #4f4f4f;
+}

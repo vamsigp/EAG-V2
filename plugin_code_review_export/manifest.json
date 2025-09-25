@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Gemini Code Review Extension (Chain, Dual-Resize, Timing)",
-  "description": "Chained Gemini reviews with left/right resize and API call timing.",
-  "version": "1.4",
+  "name": "Gemini Code Review Extension (Tabs, Export, Parallel)",
+  "description": "Multi-tab Gemini reviews for GitHub source files, with export and resizing.",
+  "version": "1.5",
   "permissions": [
-    "activeTab",
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "host_permissions": [
     "https://github.com/*"

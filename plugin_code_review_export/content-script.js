@@ -16,12 +16,10 @@ function getFileExtension() {
   }
   return null;
 }
-
 function extractSourceCode() {
   const ta = document.querySelector('textarea[data-testid="read-only-cursor-text-area"]');
   return ta && ta.value ? ta.value : null;
 }
-
 function insertFloatingButton() {
   if (document.getElementById("gemini-review-float-btn")) return;
   const btn = document.createElement("button");
@@ -38,7 +36,6 @@ function insertFloatingButton() {
   btn.onclick = () => showGeminiSidebar();
   document.body.appendChild(btn);
 }
-
 function showGeminiSidebar() {
   let sidebar = document.getElementById("gemini-review-sidebar");
   if (sidebar) {
@@ -49,28 +46,27 @@ function showGeminiSidebar() {
     insertSidebar();
   }
 }
-
 function insertSidebar() {
-  // If sidebar already exists, just .show
+  // Remove old if any for safety
   let oldSidebar = document.getElementById("gemini-review-sidebar");
   if (oldSidebar) {
     oldSidebar.style.display = "block";
     return;
   }
-  // Create sidebar container
+  // ---- SIDEBAR HTML ----
   const sidebar = document.createElement("div");
   sidebar.id = "gemini-review-sidebar";
   sidebar.innerHTML = `
-    <div id="left-resize-handle" style="width:12px; height:100%; position:absolute; left:0; top:0; z-index:10010; cursor:ew-resize;
-      background:transparent; display:flex; align-items:center; justify-content:center;">
-      <div style="width:6px;height:44px; background:#e7ecf1; border-radius:9px; margin-left:2px; margin-top:4px;opacity:0.7;"></div>
-    </div>
+    <div id="left-resize-handle"></div>
     <div class="gemini-review-header">
       <span class="gemini-title">Gemini AI Code Review</span>
       <button id="gemini-review-close" title="Close">&times;</button>
     </div>
-    <button id="gemini-review-submit" class="gemini-review-btn">Review this code</button>
-    <div id="gemini-tabs-bar"></div>
+    <div style="display:flex; align-items:center; margin: 0 14px; margin-top:18px;">
+      <button id="gemini-review-submit" class="gemini-review-btn" style="background:#3276e3;color:#fff;font-weight:600;border:none;border-radius:7px;font-size:1em;padding:7px 19px;margin-right:12px;cursor:pointer;">Review this code</button>
+      <div id="gemini-tabs-bar" style="flex:1"></div>
+      <button id="gemini-export-btn" style="background:#f7f7fa;border:1px solid #bad1ed;color:#2988e2;border-radius:8px;font-size:1em;padding:7px 11px;cursor:pointer;box-shadow:0 2px 5px -2px #e7ecfa;margin-left:8px;">Export</button>
+    </div>
     <div id="gemini-tab-content" class="gemini-review-content"></div>
     <div id="gemini-review-progress" style="margin-top:8px"></div>
   `;
@@ -83,8 +79,9 @@ function insertSidebar() {
     overflow: visible; transition: width 0.1s;`;
   document.body.appendChild(sidebar);
 
-  // --- Left drag handle for resizing ---
+  // ---- LEFT RESIZE HANDLE -----
   const leftHandle = sidebar.querySelector('#left-resize-handle');
+  // Styling via CSS below
   let isDragging = false, startX = 0, startW = 0;
   leftHandle.addEventListener('mousedown', function(e) {
     isDragging = true;
@@ -96,7 +93,7 @@ function insertSidebar() {
   window.addEventListener('mousemove', function(e) {
     if (!isDragging) return;
     const delta = startX - e.clientX;
-    let newWidth = Math.max(320, Math.min(window.innerWidth - 40, startW + delta));
+    let newWidth = Math.max(340, Math.min(window.innerWidth - 40, startW + delta));
     sidebar.style.width = newWidth + "px";
   });
   window.addEventListener('mouseup', function() {
@@ -106,9 +103,9 @@ function insertSidebar() {
     }
   });
 
-  // --- Tabs ---
+  // ---- Tabs -----
   const tabsBar = sidebar.querySelector("#gemini-tabs-bar");
-  tabsBar.style = "display: flex; gap: 6px; margin: 18px 14px 0 14px; font-size:1.03em;";
+  tabsBar.style = "display: flex; gap: 6px; font-size:1.03em;";
   GEMINI_TABS.forEach((tab, i) => {
     const tbtn = document.createElement("button");
     tbtn.className = "gemini-tab-btn";
@@ -117,8 +114,7 @@ function insertSidebar() {
     tbtn.style = `
       background: #f3f6fa; color: #3276e3; font-weight: 600;
       border: none; border-radius:9px 9px 0 0; padding:8px 14px; margin-bottom:-2px;
-      cursor:pointer; font-size:1em; outline:none;
-      border-bottom:2px solid #eee; transition:background 0.15s;
+      cursor:pointer; font-size:1em;outline:none; border-bottom:2px solid #eee; transition:background 0.15s;
     `;
     if (i === 0) tbtn.style.background = "#fff";
     tbtn.onclick = () => showTab(tab.key);
@@ -131,7 +127,7 @@ function insertSidebar() {
   document.getElementById("gemini-review-close").onclick = function() {
     sidebar.style.display = "none"; // just hide
   };
-  
+
   // Review button
   document.getElementById("gemini-review-submit").onclick = function() {
     const ext = getFileExtension();
@@ -142,8 +138,8 @@ function insertSidebar() {
     }
     tabContent.innerHTML = "";
     document.getElementById("gemini-review-progress").innerHTML = "";
-    // Reset tab results
     window.geminiTabResults = {}; // Store tab result data
+    window.geminiRawTabMd = {};   // Store raw markdown responses
     showTab(GEMINI_TABS[0].key); // Show first tab
     Array.from(tabsBar.children).forEach((btn, idx) => {
       btn.style.background = idx === 0 ? "#fff" : "#f3f6fa";
@@ -158,7 +154,74 @@ function insertSidebar() {
     });
   };
 
-  // Internal CSS
+  // --- Export button support ---
+  sidebar.querySelector("#gemini-export-btn").onclick = function() {
+    const exportType = prompt(
+      "Export type:\n1 = TXT (all tabs)\n2 = PDF (all tabs)\n3 = Markdown (.md for all tabs)\n\n(Type 1, 2, or 3 then OK)"
+    );
+    if (!exportType) return;
+
+    let txtContent = "", htmlContent = "", mdContent = "";
+    for (let tab of GEMINI_TABS) {
+      let tabHtml = window.geminiTabResults && window.geminiTabResults[tab.key] ? window.geminiTabResults[tab.key] : "";
+      let tmp = document.createElement("div");
+      tmp.innerHTML = tabHtml;
+      let plain = tmp.innerText || tmp.textContent || "";
+      txtContent += `--- ${tab.name} ---\n` + plain + "\n\n";
+      htmlContent += `<h2>${tab.name}</h2>\n${tabHtml}\n<hr>`;
+      let rawMd = window.geminiRawTabMd && window.geminiRawTabMd[tab.key] ? window.geminiRawTabMd[tab.key] : plain;
+      mdContent += `## ${tab.name}\n\n${rawMd}\n\n`;
+    }
+    txtContent += `\nExported from Gemini Chrome Plugin, ${new Date().toLocaleString()}\n`;
+    mdContent += `\n_Exported from Gemini Chrome Plugin, ${new Date().toLocaleString()}_\n`;
+    htmlContent += `<footer><small>Exported from Gemini Chrome Plugin, ${new Date().toLocaleString()}</small></footer>`;
+    if (exportType === "1") {
+      let fileName = "gemini-code-review.txt";
+      let blob = new Blob([txtContent], { type: "text/plain" });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } else if (exportType === "2") {
+      let printWindow = window.open('', '', 'width=900,height=1000');
+      printWindow.document.write(`
+        <html><head><title>Gemini Code Review Export</title>
+        <style>
+          body { font-family:Segoe UI,Arial,sans-serif;padding:25px;font-size:15px; }
+          h2 { color: #267bdb; }
+          code, pre { background:#f4f2fa;border-radius:4px;padding:7px; }
+          div { margin-bottom:17px;}
+        </style>
+        </head>
+        <body>
+          <h1>All Gemini Code Reviews</h1>
+          ${htmlContent}
+        </body></html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    } else if (exportType === "3") {
+      let fileName = "gemini-code-review.md";
+      let blob = new Blob([mdContent], { type: "text/markdown" });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } else {
+      alert("Export type not recognized.");
+    }
+  };
+
+  // ---- CSS for sidebar, handle, tabs, content ----
   const styleTag = document.createElement("style");
   styleTag.textContent = `
     #gemini-review-sidebar .gemini-review-header {
@@ -169,49 +232,67 @@ function insertSidebar() {
     #gemini-review-sidebar .gemini-title { font-weight: bold; font-size: 1.125rem; color: #3276e3; }
     #gemini-review-close { background: #f2f2f2; border:none; color:#444; font-size:1.3em; cursor:pointer; padding: 0 0.46em; border-radius:8px;}
     #gemini-review-close:hover { background:#e0e3eb;}
-    #gemini-review-submit { margin: 16px auto 10px auto; display:block; background: #3276e3; color:#fff; border:none; font-size:1em; border-radius:7px; padding:8px 22px; cursor:pointer; box-shadow: 0 2px 8px -2px #3276e333; }
-    #gemini-review-submit:hover { background: #225bb0;}
     .gemini-tab-btn { min-width:67px;}
     .gemini-tab-btn.active { background: #fff !important; border-bottom:2px solid #3276e3 !important;}
-    #gemini-review-progress { margin-top:12px; margin-left:14px; margin-right:14px;}
+    #gemini-review-progress { margin-top:14px; margin-left:14px; margin-right:14px;}
     .step-row { display: flex; align-items: center; gap:10px; font-size:1.09em; margin-bottom:0px; padding: 3px 0;}
     .step-spinner { width:18px; height:18px; display:inline-block; border:3px solid #b8dcf8; border-top:3px solid #25aecd; border-radius:50%; animation:spin 0.9s linear infinite; margin-right:3px; vertical-align: middle;}
     @keyframes spin { 100% { transform:rotate(360deg); } }
     .step-done { color:#1bcb25; font-weight:bold; font-size:1.25em; margin-right: -3px;}
     .step-timer { font-size: 0.97em; color:#888; margin-left:6px;}
-    #left-resize-handle:hover > div { background:#d1eafe; opacity:0.9;}
+    #left-resize-handle {
+      position: absolute;
+      left: 0; top: 0; width: 16px; height: 100%;
+      cursor: ew-resize; z-index: 11001;
+      display: flex; align-items: center;
+      background: transparent;
+    }
+    #left-resize-handle::after {
+      content: '';
+      width: 6px; height: 54px; min-height:54px;
+      background: #e7ecf1;
+      border-radius: 8px;
+      margin-left: 3px;
+      margin-top: 16px;
+      opacity: 0.7;
+      display: block;
+      transition: background 0.18s;
+    }
+    #left-resize-handle:hover::after {
+      background: #abd9f2; opacity: 0.93;
+    }
     #gemini-review-float-btn { }
+    #gemini-review-submit { background:#3276e3;color:#fff;font-weight:600;border:none;border-radius:7px;font-size:1em;padding:7px 19px;margin-right:12px;cursor:pointer; }
+    #gemini-review-submit:hover { background: #225bb0; }
   `;
   document.head.appendChild(styleTag);
 
-  // Tab switching function
+  // ---- Tab switch function ----
   window.showTab = function(tabKey) {
     Array.from(tabsBar.children).forEach(btn => {
       btn.className = 'gemini-tab-btn' + (btn.getAttribute('data-tab') === tabKey ? ' active' : '');
       btn.style.background = btn.getAttribute('data-tab') === tabKey ? '#fff' : '#f3f6fa';
       btn.style.borderBottom = btn.getAttribute('data-tab') === tabKey ? '2px solid #3276e3' : '2px solid #eee';
     });
-    // Show content for tab
-    tabContent.innerHTML = window.geminiTabResults && window.geminiTabResults[tabKey] ? window.geminiTabResults[tabKey] : `<div style="margin-top:16px; color:#aaa; font-size:1.12em;"><b>Loading...</b></div>`;
+    tabContent.innerHTML = window.geminiTabResults && window.geminiTabResults[tabKey]
+      ? window.geminiTabResults[tabKey]
+      : `<div style="margin-top:16px; color:#aaa; font-size:1.12em;"><b>Loading...</b></div>`;
   };
 }
 
-// --- Chain Gemini calls, results by tab ---
+// --- Gemini review logic: first 3 parallel, summary sequential ---
 async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv) {
   window.geminiTabResults = {};
+  window.geminiRawTabMd = {};
   progressDiv.innerHTML = GEMINI_TABS.map((tab, i) =>
     `<div class="step-row" id="step-row-${tab.key}">
       <span class="step-spinner" id="spinner-${tab.key}"></span>
       <span id="step-label-${tab.key}">${tab.name}</span>
       <span class="step-timer" id="step-timer-${tab.key}"></span>
-    </div>`
-  ).join('');
-
+    </div>`).join('');
   // Parallel for first 3
-  const apiKeysExceptSummary = GEMINI_TABS.slice(0, 3);
-
-  // Launch all three set of API calls in parallel
-  const parallelPromises = apiKeysExceptSummary.map(tab => {
+  const firstThree = GEMINI_TABS.slice(0, 3);
+  const parallelPromises = firstThree.map(tab => {
     const t0 = performance.now();
     return callGeminiAPI(getGeminiPrompt(tab.key, ext, code), apiKey)
       .then(reply => {
@@ -227,20 +308,18 @@ async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv) {
               <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
               ${marked.parse(reply)}
             </div>`;
-        // default show first tab content instantly
+        window.geminiRawTabMd[tab.key] = reply;
         if (tab.key === GEMINI_TABS[0].key) document.getElementById('gemini-tab-content').innerHTML = window.geminiTabResults[tab.key];
       });
   });
-
-  // Wait till all three are done
   await Promise.all(parallelPromises);
 
-  // Sequentially run summary tab after others have completed
+  // Summary last
   const summaryTab = GEMINI_TABS[3];
   const t0 = performance.now();
   const reply = await callGeminiAPI(getGeminiPrompt(summaryTab.key, ext, code), apiKey);
   const t1 = performance.now();
-  const seconds = ((t1 - t0)/1000).toFixed(2);
+  const seconds = ((t1 - t0) / 1000).toFixed(2);
   document.getElementById(`step-timer-${summaryTab.key}`).textContent = `(${seconds}s)`;
   document.getElementById(`spinner-${summaryTab.key}`).style.display = "none";
   document.getElementById(`step-row-${summaryTab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
@@ -251,11 +330,11 @@ async function runGeminiTabsChain(ext, code, apiKey, tabContent, progressDiv) {
       <h2 style="margin-bottom:11px;color:#267bdb">${summaryTab.name}</h2>
       ${marked.parse(reply)}
     </div>`;
-
+  window.geminiRawTabMd[summaryTab.key] = reply;
   progressDiv.innerHTML += `<div style="margin-top:12px;color:green;font-size:1.08em;"><b>All reviews completed!</b></div>`;
 }
 
-// --- Prompt Builder ---
+// --- Prompts ---
 function getGeminiPrompt(tabKey, ext, code) {
   if (tabKey === "style") {
     return `Review this ${ext} code for style/readability. Formatting, conventions, naming, idioms, best practices. Markdown, sections for strengths & weaknesses.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
@@ -275,13 +354,13 @@ function getGeminiPrompt(tabKey, ext, code) {
 // --- Gemini call ---
 async function callGeminiAPI(prompt, apiKey) {
   try {
-    // Use gemini-2.0-flash if public, else fallback
+    // Use gemini-2.0-flash if available, else fallback
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey,
       {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({contents: [{parts: [{text: prompt}]}]})
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       }
     );
     const data = await response.json();

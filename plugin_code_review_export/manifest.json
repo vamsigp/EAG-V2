@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Code Review Extension (Chain, Dual-Resize, Timing)",
+  "description": "Chained Gemini reviews with left/right resize and API call timing.",
+  "version": "1.4",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://github.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*/blob/*"],
+      "js": ["marked.min.js", "content-script.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

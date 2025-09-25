@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gemini API Key Settings</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; font-size:15px; padding:22px; width:350px; min-width:260px; max-width:430px;}
+    label {display:block; margin-bottom:8px; font-weight:500;}
+    input[type=password] { width: 98%; min-width: 220px; max-width: 380px; padding: 10px; margin-bottom: 18px; font-size: 16px; border: 1px solid #bad1ed; border-radius: 5px; box-sizing: border-box;}
+    #save-key, #change-key, #cancel-key { background: #3276e3; color: #fff; padding: 9px 18px; border: none; border-radius:4px; font-size:15px; margin-top: 3px; cursor: pointer; transition: background 0.2s;}
+    #change-key, #cancel-key { background: #eee; color: #3276e3; margin-left: 6px; }
+    #save-key:hover { background: #225bb0;}
+    #status { margin-top:11px; font-size:14px; color:#225bb0; font-weight:500; display: flex; align-items: center;}
+    #lock-emoji { font-size:1.22em; margin-right:7px; }
+  </style>
+</head>
+<body>
+  <form id="gemini-key-form" style="display:none;">
+    <label for="api-key">Gemini API Key:</label>
+    <input id="api-key" type="password" placeholder="Paste your Gemini API key" autocomplete="off" />
+    <button id="save-key" type="submit">Save</button>
+    <button id="cancel-key" type="button">Cancel</button>
+  </form>
+  <div id="secure-message" style="display:none;">
+    <span id="status">
+      <span id="lock-emoji">🔒</span>
+      Gemini API key is saved securely.
+    </span>
+    <button id="change-key">Change key</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

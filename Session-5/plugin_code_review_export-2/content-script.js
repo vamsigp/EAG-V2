@@ -256,6 +256,7 @@ class GeminiReviewUI {
     await Promise.all(firstThree.map(async tab => {
       const t0 = performance.now();
       const reply = await callGeminiAPI(buildPrompt(tab.key, ext, code), apiKey);
+      const parsed = parseStructuredResponse(reply);
       const t1 = performance.now();
       const seconds = ((t1 - t0) / 1000).toFixed(2);
       document.getElementById(`step-timer-${tab.key}`).textContent = `(${seconds}s)`;
@@ -263,17 +264,49 @@ class GeminiReviewUI {
       document.getElementById(`step-row-${tab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
       document.getElementById(`step-label-${tab.key}`).style.fontWeight = "bold";
       document.getElementById(`step-timer-${tab.key}`).style.color = "#139c13";
+
+      // Enhanced display with confidence and limitations
+      let metadataHtml = '';
+      if (parsed.structured) {
+        metadataHtml = `<div style="background:#f0f8ff;border:1px solid #b3d9ff;border-radius:6px;padding:8px;margin-bottom:12px;font-size:0.9em;">
+          <span style="color:#0066cc;font-weight:600;">📊 Analysis: ${parsed.structured.analysis_type || 'N/A'}</span>
+          <span style="margin-left:15px;color:#28a745;font-weight:600;">🎯 Confidence: ${parsed.confidence}</span>
+          ${parsed.limitations !== 'none' ? `<div style="color:#dc3545;margin-top:4px;"><strong>⚠️ Limitations:</strong> ${parsed.limitations}</div>` : ''}
+        </div>`;
+      }
+
+      // Debug logging
+      console.log(`[Gemini UI] Tab: ${tab.name}, Raw reply starts with:`, reply.substring(0, 50));
+      console.log(`[Gemini UI] Tab: ${tab.name}, Parsed structured:`, !!parsed.structured);
+      console.log(`[Gemini UI] Tab: ${tab.name}, DisplayHtml length:`, parsed.displayHtml.length);
+
+      // Safety check: If displayHtml looks like raw JSON, force conversion
+      let finalDisplayHtml = parsed.displayHtml;
+      if (reply.trim().startsWith('{') && reply.includes('"markdown_report"')) {
+        console.log('[Gemini UI] Detected raw JSON response, forcing markdown extraction');
+        try {
+          const jsonObj = JSON.parse(reply);
+          if (jsonObj.markdown_report) {
+            finalDisplayHtml = marked ? marked.parse(jsonObj.markdown_report) : jsonObj.markdown_report.replace(/\n/g, '<br>');
+          }
+        } catch (e) {
+          console.warn('[Gemini UI] Failed to force-parse JSON:', e);
+        }
+      }
+
       tabResults[tab.key] = `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
         <h2 style="margin-bottom:11px;color:#267bdb">${tab.name}</h2>
-        ${marked.parse(reply)}
+        ${metadataHtml}
+        <div class="gemini-content">${finalDisplayHtml}</div>
         </div>`;
-      tabRawMarkdown[tab.key] = reply;
+      tabRawMarkdown[tab.key] = parsed.markdown;
       if (tab.key === GEMINI_TABS[0].key) this.els.tabContent.innerHTML = tabResults[tab.key];
     }));
     // Summary last
     const summaryTab = GEMINI_TABS[3];
     const t0 = performance.now();
     const reply = await callGeminiAPI(buildPrompt(summaryTab.key, ext, code), apiKey);
+    const parsed = parseStructuredResponse(reply);
     const t1 = performance.now();
     const seconds = ((t1 - t0) / 1000).toFixed(2);
     document.getElementById(`step-timer-${summaryTab.key}`).textContent = `(${seconds}s)`;
@@ -281,11 +314,42 @@ class GeminiReviewUI {
     document.getElementById(`step-row-${summaryTab.key}`).insertAdjacentHTML("afterbegin", `<span class="step-done">✅</span>`);
     document.getElementById(`step-label-${summaryTab.key}`).style.fontWeight = "bold";
     document.getElementById(`step-timer-${summaryTab.key}`).style.color = "#139c13";
+
+    // Enhanced display with confidence and limitations
+    let metadataHtml = '';
+    if (parsed.structured) {
+      metadataHtml = `<div style="background:#f0f8ff;border:1px solid #b3d9ff;border-radius:6px;padding:8px;margin-bottom:12px;font-size:0.9em;">
+        <span style="color:#0066cc;font-weight:600;">📊 Analysis: ${parsed.structured.analysis_type || 'N/A'}</span>
+        <span style="margin-left:15px;color:#28a745;font-weight:600;">🎯 Confidence: ${parsed.confidence}</span>
+        ${parsed.limitations !== 'none' ? `<div style="color:#dc3545;margin-top:4px;"><strong>⚠️ Limitations:</strong> ${parsed.limitations}</div>` : ''}
+      </div>`;
+    }
+
+    // Debug logging
+    console.log(`[Gemini UI] Summary Tab, Raw reply starts with:`, reply.substring(0, 50));
+    console.log(`[Gemini UI] Summary Tab, Parsed structured:`, !!parsed.structured);
+    console.log(`[Gemini UI] Summary Tab, DisplayHtml length:`, parsed.displayHtml.length);
+
+    // Safety check: If displayHtml looks like raw JSON, force conversion
+    let finalDisplayHtml = parsed.displayHtml;
+    if (reply.trim().startsWith('{') && reply.includes('"markdown_report"')) {
+      console.log('[Gemini UI] Summary - Detected raw JSON response, forcing markdown extraction');
+      try {
+        const jsonObj = JSON.parse(reply);
+        if (jsonObj.markdown_report) {
+          finalDisplayHtml = marked ? marked.parse(jsonObj.markdown_report) : jsonObj.markdown_report.replace(/\n/g, '<br>');
+        }
+      } catch (e) {
+        console.warn('[Gemini UI] Summary - Failed to force-parse JSON:', e);
+      }
+    }
+
     tabResults[summaryTab.key] = `<div style="margin-top:10px;margin-bottom:8px;padding:7px 10px;background:#f9fbff;border-radius:7px;box-shadow:0 0 4px #e0eaff;">
       <h2 style="margin-bottom:11px;color:#267bdb">${summaryTab.name}</h2>
-      ${marked.parse(reply)}
+      ${metadataHtml}
+      <div class="gemini-content">${finalDisplayHtml}</div>
       </div>`;
-    tabRawMarkdown[summaryTab.key] = reply;
+    tabRawMarkdown[summaryTab.key] = parsed.markdown;
     progressDiv.innerHTML += `<div style="margin-top:12px;color:green;font-size:1.08em;"><b>All reviews completed!</b></div>`;
     this.state.tabResults = tabResults;
     this.state.tabRawMarkdown = tabRawMarkdown;
@@ -348,24 +412,231 @@ class GeminiReviewUI {
 
 // LOGIC
 function buildPrompt(tabKey, ext, code) {
+  const baseInstruct = `You are a senior software engineer conducting a thorough code review. Analyze the following ${ext} source code systematically by thinking through each aspect step-by-step.
+
+INSTRUCTIONS:
+1. First, read through the entire code to understand its purpose and structure
+2. Analyze each section methodically for different types of issues
+3. Think through your reasoning before stating conclusions
+4. Verify your findings by double-checking critical observations
+5. If uncertain about any aspect, clearly state your confidence level
+
+ANALYSIS FRAMEWORK:
+For each issue you identify, specify the reasoning type:
+- [LOGIC] - Logical errors or algorithmic issues  
+- [SECURITY] - Security vulnerabilities or risks
+- [PERFORMANCE] - Performance bottlenecks or inefficiencies
+- [STYLE] - Code style and formatting issues
+- [MAINTAINABILITY] - Code organization and readability
+- [BEST_PRACTICES] - Deviation from established patterns
+
+REQUIRED OUTPUT FORMAT:
+Respond with a valid JSON object following this exact schema:
+
+{
+  "turn_context": "string (For multi-turn context)",
+  "analysis_type": "string (style_review, bug_detection, etc.)",
+  "reasoning_type": "string (The overarching type of analysis: logical_analysis, etc.)",
+  "confidence_level": "string (high|medium|low)",
+  "limitations": "string (Any uncertainties or missing context)",
+  "findings": [
+    {
+      "REASONING_TYPE": "string ([LOGIC]|[SECURITY]|[STYLE]|etc.)",
+      "THOUGHT": "string (Explicit step-by-step reasoning for this finding)",
+      "ACTION": "string (NONE, as no tools are defined)",
+      "ISSUE_DETAIL": "string (The actual finding or suggested fix)"
+    }
+  ],
+  "markdown_report": "string (The detailed analysis presented in markdown format)"
+}`;
+
   if (tabKey === "style") {
-    return `Review this ${ext} code for style/readability. Formatting, conventions, naming, idioms, best practices. Markdown, sections for strengths & weaknesses.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
+    return `${baseInstruct}
+
+**SPECIFIC TASK**: Comprehensive style and readability analysis for ${ext} code.
+**FOCUS**: Use [STYLE], [MAINTAINABILITY], and [BEST_PRACTICES] reasoning types.
+**ANALYSIS STEPS**: 
+1) Review code formatting, indentation, and spacing
+2) Evaluate naming conventions for variables, functions, and classes  
+3) Assess code organization and structure clarity
+4) Check adherence to ${ext.slice(1)} language conventions
+5) Identify documentation and comment quality
+**EXPECTED OUTPUT**: Well-structured markdown report with clear strengths/weaknesses sections and actionable recommendations.
+
+\`\`\`${ext.slice(1)}
+${code}
+\`\`\``;
   }
 
   if (tabKey === "bugs") {
-    return `Analyze for bugs, logic errors, edge cases, failure points. List problems and fixes. Markdown.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
+    return `${baseInstruct}
+
+**SPECIFIC TASK**: Thorough bug detection and logic error analysis for ${ext} code.
+**FOCUS**: Use [LOGIC], [SECURITY], and [PERFORMANCE] reasoning types.
+**ANALYSIS STEPS**:
+1) Trace execution paths and control flow logic
+2) Identify potential null/undefined references and memory issues  
+3) Check boundary conditions and edge case handling
+4) Analyze error handling and exception management
+5) Look for race conditions and concurrency issues
+6) Verify input validation and security vulnerabilities
+**EXPECTED OUTPUT**: Detailed markdown report listing specific issues with line references and concrete fix suggestions.
+
+\`\`\`${ext.slice(1)}
+${code}
+\`\`\``;
   }
 
   if (tabKey === "tests") {
-    return `Suggest unit/integration test cases for this ${ext} code. Provide code snippets where possible. Markdown.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
+    return `${baseInstruct}
+
+**SPECIFIC TASK**: Comprehensive test strategy design for ${ext} code.
+**FOCUS**: Use [LOGIC] and [BEST_PRACTICES] reasoning types for test planning.
+**ANALYSIS STEPS**:
+1) Identify all testable units (functions, classes, methods)
+2) Map input/output scenarios and data flow paths
+3) Design unit tests with specific test cases and assertions
+4) Plan integration tests for component interactions
+5) Consider edge cases, error conditions, and boundary testing
+6) Evaluate test coverage completeness and recommend testing frameworks
+**EXPECTED OUTPUT**: Structured markdown report with specific test cases, code examples, and testing strategy recommendations.
+
+\`\`\`${ext.slice(1)}
+${code}
+\`\`\``;
   }
 
   if (tabKey === "summary") {
-    return `Summarize what this ${ext} code does. Concise, markdown.\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
+    return `${baseInstruct}
+
+**SPECIFIC TASK**: Create a comprehensive functional summary of ${ext} code.
+**FOCUS**: Use [LOGIC] and [MAINTAINABILITY] reasoning types for architectural analysis.
+**ANALYSIS STEPS**:
+1) Identify the primary purpose and functionality
+2) Map key components, classes, and their relationships
+3) Trace data flow and transformation processes
+4) Catalog external dependencies and integrations
+5) Assess overall architecture and design patterns
+6) Note performance characteristics and scalability considerations
+**EXPECTED OUTPUT**: Clear, concise markdown summary that explains what the code does, how it works, and its key architectural decisions.
+
+\`\`\`${ext.slice(1)}
+${code}
+\`\`\``;
   }
 
-  return `Review code:\n\n\`\`\`${ext.slice(1)}\n${code}\n\`\`\``;
+  return `${baseInstruct}
+
+**TASK**: General code review of ${ext} code.
+
+\`\`\`${ext.slice(1)}
+${code}
+\`\`\``;
 }
+
+function parseStructuredResponse(response) {
+  console.log('[Gemini Parser] Raw response:', response.substring(0, 200) + '...');
+
+  // Step 1: Check if response is wrapped in markdown code blocks
+  let cleanedResponse = response.trim();
+  if (cleanedResponse.startsWith('```json') || cleanedResponse.startsWith('```')) {
+    console.log('[Gemini Parser] Detected markdown code blocks, stripping...');
+    // Remove opening ```json or ```
+    cleanedResponse = cleanedResponse.replace(/^```(?:json)?\s*\n?/, '');
+    // Remove closing ```
+    cleanedResponse = cleanedResponse.replace(/\n?\s*```\s*$/, '');
+    console.log('[Gemini Parser] Cleaned response starts with:', cleanedResponse.substring(0, 100) + '...');
+  }
+
+  try {
+    // Try to parse as JSON first
+    const jsonResponse = JSON.parse(cleanedResponse);
+    console.log('[Gemini Parser] Parsed JSON successfully, has markdown_report:', !!jsonResponse.markdown_report);
+
+    if (jsonResponse.markdown_report) {
+      // Success: structured JSON with markdown_report
+      console.log('[Gemini Parser] Using markdown_report field');
+      let markdownHtml;
+      try {
+        markdownHtml = marked ? marked.parse(jsonResponse.markdown_report) : jsonResponse.markdown_report.replace(/\n/g, '<br>');
+      } catch (markdownError) {
+        console.warn('[Gemini Parser] Marked.js error, using fallback:', markdownError);
+        markdownHtml = jsonResponse.markdown_report.replace(/\n/g, '<br>');
+      }
+
+      return {
+        structured: jsonResponse,
+        markdown: jsonResponse.markdown_report,
+        displayHtml: markdownHtml,
+        confidence: jsonResponse.confidence_level || 'unknown',
+        limitations: jsonResponse.limitations || 'none'
+      };
+    } else {
+      // JSON but no markdown_report field - show formatted JSON
+      console.log('[Gemini Parser] No markdown_report field, showing formatted JSON');
+      return {
+        structured: jsonResponse,
+        markdown: JSON.stringify(jsonResponse, null, 2),
+        displayHtml: `<div style="background:#fff3cd;border:1px solid #ffeaa7;border-radius:6px;padding:12px;margin-bottom:12px;">
+          <h4 style="color:#856404;margin:0 0 8px 0;">⚠️ Raw JSON Response (markdown_report field missing)</h4>
+          <pre style="background:#f8f9fa;padding:12px;border-radius:6px;overflow-x:auto;font-family:monospace;font-size:0.9em;white-space:pre-wrap;">${JSON.stringify(jsonResponse, null, 2)}</pre>
+        </div>`,
+        confidence: jsonResponse.confidence_level || 'unknown',
+        limitations: jsonResponse.limitations || 'none'
+      };
+    }
+  } catch (e) {
+    // Not valid JSON, treat as plain text/markdown
+    console.log('[Gemini Parser] Not valid JSON, treating as markdown:', e.message);
+    console.log('[Gemini Parser] Failed JSON content preview:', cleanedResponse.substring(0, 300));
+
+    // Check if this is an API error response
+    if (response.startsWith('API Error') || response.startsWith('Error:')) {
+      console.log('[Gemini Parser] Detected API error response');
+      const errorHtml = `<div style="background:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;padding:16px;margin:12px 0;">
+        <h4 style="color:#856404;margin:0 0 8px 0;display:flex;align-items:center;">
+          <span style="font-size:1.2em;margin-right:8px;">⚠️</span> 
+          ${response.includes('503') ? 'Gemini API Temporarily Overloaded' : 'API Error'}
+        </h4>
+        <p style="margin:8px 0;color:#856404;line-height:1.4;">
+          <strong>Issue:</strong> ${response.replace('Error: ', '').replace('API Error ', '')}
+        </p>
+        ${response.includes('503') || response.includes('overloaded') ?
+          '<p style="margin:8px 0;color:#856404;"><strong>Solution:</strong> The Gemini API is experiencing high traffic. Please wait a moment and try again.</p>' :
+          '<p style="margin:8px 0;color:#856404;"><strong>Solution:</strong> Please check your API key and try again.</p>'
+        }
+        <p style="margin:8px 0 0 0;font-size:0.9em;color:#6c757d;">
+          💡 <em>Tip: Try refreshing in 30-60 seconds when API load decreases</em>
+        </p>
+      </div>`;
+
+      return {
+        structured: null,
+        markdown: response,
+        displayHtml: errorHtml,
+        confidence: 'error',
+        limitations: 'API temporarily unavailable'
+      };
+    }
+
+    let markdownHtml;
+    try {
+      markdownHtml = marked ? marked.parse(response) : response.replace(/\n/g, '<br>');
+    } catch (markdownError) {
+      console.warn('[Gemini Parser] Marked.js error in fallback, using basic formatting:', markdownError);
+      markdownHtml = response.replace(/\n/g, '<br>');
+    }
+
+    return {
+      structured: null,
+      markdown: response,
+      displayHtml: markdownHtml,
+      confidence: 'unknown',
+      limitations: 'none'
+    };
+  }
+}
+
 async function callGeminiAPI(prompt, apiKey) {
   return new Promise((resolve) => {
     console.log('[Gemini CS] Sending Gemini API request', { prompt, apiKey: apiKey ? '***' : undefined });
@@ -378,18 +649,64 @@ async function callGeminiAPI(prompt, apiKey) {
       },
       (response) => {
         console.log('[Gemini CS] Received Gemini API response', response);
+        console.log('[Gemini CS] Response data structure:', JSON.stringify(response, null, 2));
+
         if (!response || !response.success) {
           resolve("Error: " + (response && response.error ? response.error : "Unknown error"));
           return;
         }
+
         const data = response.data;
-        if (
-          data && data.candidates && data.candidates[0] &&
-          data.candidates[0].content && data.candidates[0].content.parts[0]
-        ) {
-          resolve(data.candidates[0].content.parts[0].text);
+        console.log('[Gemini CS] Extracted data:', data);
+
+        // Check for API-level errors (e.g., 503 overload)
+        if (data && data.error) {
+          const errorMsg = `API Error ${data.error.code}: ${data.error.message}`;
+          console.log('[Gemini CS] API returned error:', errorMsg);
+          resolve(errorMsg);
+          return;
+        }
+
+        // Enhanced response parsing with multiple fallback paths
+        let extractedText = null;
+
+        // Path 1: Standard structure
+        if (data && data.candidates && data.candidates[0] &&
+          data.candidates[0].content && data.candidates[0].content.parts[0]) {
+          extractedText = data.candidates[0].content.parts[0].text;
+          console.log('[Gemini CS] Used standard path, text length:', extractedText ? extractedText.length : 0);
+        }
+
+        // Path 2: Alternative structure
+        if (!extractedText && data && data.candidates && data.candidates[0]) {
+          const candidate = data.candidates[0];
+          if (candidate.text) {
+            extractedText = candidate.text;
+            console.log('[Gemini CS] Used alternative path 1 (candidate.text)');
+          } else if (candidate.content && typeof candidate.content === 'string') {
+            extractedText = candidate.content;
+            console.log('[Gemini CS] Used alternative path 2 (candidate.content as string)');
+          }
+        }
+
+        // Path 3: Direct text field
+        if (!extractedText && data && data.text) {
+          extractedText = data.text;
+          console.log('[Gemini CS] Used direct text field');
+        }
+
+        // Path 4: Response field
+        if (!extractedText && data && data.response) {
+          extractedText = data.response;
+          console.log('[Gemini CS] Used response field');
+        }
+
+        if (extractedText && extractedText.trim()) {
+          console.log('[Gemini CS] Successfully extracted text, length:', extractedText.length);
+          resolve(extractedText);
         } else {
-          resolve("No response from Gemini.");
+          console.error('[Gemini CS] No text found in response structure');
+          resolve("Error: No text content found in Gemini response");
         }
       }
     );

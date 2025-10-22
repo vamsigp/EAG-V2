@@ -1,10 +1,9 @@
 [project]
-name = "mcp-intro"
+name = "mcp-paint"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "mcp[cli]>=1.15.0",
-    "pillow>=11.3.0",
+    "fastmcp>=2.12.4",
 ]

@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Code Review Extension",
+  "description": "AI code review on GitHub with Gemini and polished UX - Improved Prompt",
+  "version": "3.0",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://github.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://github.com/*/blob/*"
+      ],
+      "js": [
+        "marked.min.js",
+        "content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

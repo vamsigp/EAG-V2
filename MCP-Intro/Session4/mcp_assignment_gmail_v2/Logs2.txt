@@ -1,0 +1,71 @@
+Logs2.txt
+
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint>
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint> python talk2mcp.py
+Starting main execution...
+Establishing connection to MCP server...
+Connection established, creating session...
+Session created, initializing...
+Requesting tool list...
+Successfully retrieved 26 tools
+Creating system prompt...
+Number of tools: 26
+Added description for tool: 1. add(a: integer, b: integer) - Add two numbers 
+Added description for tool: 2. add_list(l: array) - Add all numbers in a list
+Added description for tool: 3. subtract(a: integer, b: integer) - Subtract two numbers
+Added description for tool: 4. multiply(a: integer, b: integer) - Multiply two numbers
+Added description for tool: 5. divide(a: integer, b: integer) - Divide two numbers
+Added description for tool: 6. power(a: integer, b: integer) - Power of two numbers
+Added description for tool: 7. sqrt(a: integer) - Square root of a number
+Added description for tool: 8. cbrt(a: integer) - Cube root of a number
+Added description for tool: 9. factorial(a: integer) - factorial of a number
+Added description for tool: 10. log(a: integer) - log of a number
+Added description for tool: 11. remainder(a: integer, b: integer) - remainder of two numbers divison
+Added description for tool: 12. sin(a: integer) - sin of a number
+Added description for tool: 13. cos(a: integer) - cos of a number
+Added description for tool: 14. tan(a: integer) - tan of a number
+Added description for tool: 15. mine(a: integer, b: integer) - special mining tool
+Added description for tool: 16. create_thumbnail(image_path: string) - Create a thumbnail from an image
+Added description for tool: 17. strings_to_chars_to_int(string: string) - Return the ASCII values of the characters in a word
+Added description for tool: 18. int_list_to_exponential_sum(int_list: array) - Return sum of exponentials of numbers in a list
+Added description for tool: 19. fibonacci_numbers(n: integer) - Return the first n Fibonacci Numbers
+Added description for tool: 20. draw_rectangle(x1: integer, y1: integer, x2: integer, y2: integer) - Draw a rectangle in Paint from (x1,y1) to (x2,y2)
+Added description for tool: 21. add_text_in_paint(text: string) - Add text in Paint
+Added description for tool: 22. get_last_rectangle_center() - Get the center coordinates (x,y) of the last drawn rectangle
+Added description for tool: 23. add_text_in_paint_at(text: string, x: integer, y: integer) - Add text in Paint at provided canvas coordinates (x,y)
+Added description for tool: 24. add_text_inside_last_rectangle(text: string) - Create a text box constrained within the last drawn rectangle and type text     
+Added description for tool: 25. send_email(to: string, subject: string, body: string) - Send an email using Gmail SMTP. If 'to' is empty, uses EMAIL_TO from env.
+Added description for tool: 26. open_paint() - Open Microsoft Paint maximized on secondary monitor
+Successfully created tools description
+Created system prompt...
+Starting iteration loop...
+
+--- Iteration 1 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FUNCTION_CALL: send_email|vkrishna84@gmail.com|hello from mcp|hello from mcp
+
+DEBUG: Raw function info:  send_email|vkrishna84@gmail.com|hello from mcp|hello from mcp
+DEBUG: Split parts: ['send_email', 'vkrishna84@gmail.com', 'hello from mcp', 'hello from mcp']
+DEBUG: Function name: send_email
+DEBUG: Raw parameters: ['vkrishna84@gmail.com', 'hello from mcp', 'hello from mcp']
+DEBUG: Found tool: send_email
+DEBUG: Tool schema: {'properties': {'to': {'title': 'To', 'type': 'string'}, 'subject': {'title': 'Subject', 'type': 'string'}, 'body': {'title': 'Body', 'type': 'string'}}, 'required': ['to', 'subject', 'body'], 'title': 'send_emailArguments', 'type': 'object'}
+DEBUG: Schema properties: {'to': {'title': 'To', 'type': 'string'}, 'subject': {'title': 'Subject', 'type': 'string'}, 'body': {'title': 'Body', 'type': 'string'}}
+DEBUG: Converting parameter to with value vkrishna84@gmail.com to type string
+DEBUG: Converting parameter subject with value hello from mcp to type string
+DEBUG: Converting parameter body with value hello from mcp to type string
+DEBUG: Final arguments: {'to': 'vkrishna84@gmail.com', 'subject': 'hello from mcp', 'body': 'hello from mcp'}
+DEBUG: Calling tool send_email
+DEBUG: Raw result: meta=None content=[TextContent(type='text', text='{\n  "content": [\n    {\n      "type": "text",\n      "text": "Email sent to vkrishna84@gmail.com",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}', annotations=None, meta=None)] structuredContent=None isError=False
+DEBUG: Result has content attribute
+DEBUG: Final iteration result: ['{\n  "content": [\n    {\n      "type": "text",\n      "text": "Email sent to vkrishna84@gmail.com",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}']
+
+--- Iteration 2 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FINAL_ANSWER: done
+
+=== Agent Execution Complete ===

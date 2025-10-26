@@ -390,11 +390,11 @@ For issues and questions:
 
 ```bash
 # Run the main application to test
-python personal_history_agent.py
+python main.py
 
 # Test with sample inputs
-# Name: Test User
+# Name: RaghuRam
 # Birth Date: 15/08  
-# City: London
+# City: Bengaluru
 # Choice: pdf
 ```

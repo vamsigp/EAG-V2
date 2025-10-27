@@ -353,14 +353,6 @@ This project is open source. See LICENSE file for details.
 - ✅ **City Information**: Comprehensive facts about landmarks, culture, and history
 - ✅ **Personalized Content**: Meaningful connections between user data and historical information
 
-## Recent Updates (October 2025)
-
-- ✅ **Fixed Stage Transition Timing**: Resolved premature stage transitions that caused workflow interruption
-- ✅ **Enhanced Loop Detection**: Made loop detection argument-aware to handle multi-step data collection
-- ✅ **Improved Research Content**: Added detailed historical databases with real facts instead of placeholder text
-- ✅ **PDF Content Quality**: Fixed PDF generation to include actual research data instead of generic content
-- ✅ **End-to-End Workflow**: Complete user journey from info collection to PDF delivery works seamlessly
-
 ## Support
 
 For issues and questions:

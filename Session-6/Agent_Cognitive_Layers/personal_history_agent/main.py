@@ -389,14 +389,22 @@ class PersonalHistoryAgent:
 async def main():
     """Main entry point"""
     
-    print("📋 Make sure to set your GEMINI_API_KEY in .env file!")
+    import sys
+    
+    # Check for mock mode
+    use_real_llm = True
+    if len(sys.argv) > 1 and sys.argv[1] == "--mock":
+        use_real_llm = False
+        print("� Running in MOCK MODE (no API calls)")
+    else:
+        print("�📋 Make sure to set your GEMINI_API_KEY in .env file!")
+    
     print("🚀 Starting Personal History Agent...\n")
     
     # Initialize and start the agent
-    agent = PersonalHistoryAgent(use_real_llm=True)
+    agent = PersonalHistoryAgent(use_real_llm=use_real_llm)
     
     # Check if we should run a quick test
-    import sys
     if len(sys.argv) > 1 and sys.argv[1] == "--test":
         await agent.quick_test()
     else:

@@ -40,8 +40,9 @@ class PerceptionLayer:
                 return False
             
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
-            print("✅ Gemini AI configured successfully with gemini-2.0-flash!")
+            # Use gemini-2.5-flash which has better rate limits
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            print("✅ Gemini AI configured successfully with gemini-2.5-flash!")
             return True
             
         except Exception as e:

@@ -6,11 +6,25 @@ from mcp import types
 from PIL import Image as PILImage
 import math
 import sys
+import os
 from pywinauto.application import Application
 import win32gui
 import win32con
 import time
 from win32api import GetSystemMetrics
+from dotenv import load_dotenv
+# import google as genai
+
+# Load environment variables from .env if present
+# load_dotenv()
+
+# Configure Google Generative AI using GOOGLE_API_KEY
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+else:
+    # Fail fast with a clear message; you can choose to warn instead
+    print("WARNING: GOOGLE_API_KEY not set. Gemini features will be unavailable.")
 
 # instantiate an MCP server client
 mcp = FastMCP("Calculator")
@@ -180,7 +194,7 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
             time.sleep(0.2)
         
         # Click on the Rectangle tool using the correct coordinates for secondary screen
-        paint_window.click_input(coords=(530, 82 ))
+        paint_window.click_input(coords=(440, 63))
         time.sleep(0.2)
         
         # Get the canvas area
@@ -188,9 +202,11 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
         
         # Draw rectangle - coordinates should already be relative to the Paint window
         # No need to add primary_width since we're clicking within the Paint window
-        canvas.press_mouse_input(coords=(x1+2560, y1))
-        canvas.move_mouse_input(coords=(x2+2560, y2))
-        canvas.release_mouse_input(coords=(x2+2560, y2))
+        
+        canvas.click_input(coords=(x1,y1))
+        canvas.press_mouse_input(coords=(x1+50, y1))
+        canvas.move_mouse_input(coords=(x2+50, y2))
+        canvas.release_mouse_input(coords=(x2+50, y2))
         
         return {
             "content": [
@@ -211,8 +227,8 @@ async def draw_rectangle(x1: int, y1: int, x2: int, y2: int) -> dict:
         }
 
 @mcp.tool()
-async def draw_rectangle_and_text(text: str) -> dict:
-    """Draw a rectangle and add text in Paint"""
+async def draw_text(text: str) -> dict:
+    """Add text in Paint"""
     global paint_app
     try:
         if not paint_app:
@@ -234,24 +250,20 @@ async def draw_rectangle_and_text(text: str) -> dict:
             time.sleep(0.5)
         
         # Click on the Rectangle tool
-        paint_window.click_input(coords=(528, 92))
+        paint_window.click_input(coords=(290, 70))
         time.sleep(0.5)
         
         # Get the canvas area
         canvas = paint_window.child_window(class_name='MSPaintView')
         
         # Select text tool using keyboard shortcuts
-        paint_window.type_keys('t')
-        time.sleep(0.5)
-        paint_window.type_keys('x')
+        paint_window.click_input(coords=(150, 300))
         time.sleep(0.5)
         
-        # Click where to start typing
-        canvas.click_input(coords=(810, 533))
-        time.sleep(0.5)
         
         # Type the text passed from client
         paint_window.type_keys(text)
+    
         time.sleep(0.5)
         
         # Click to exit text mode
@@ -277,7 +289,7 @@ async def draw_rectangle_and_text(text: str) -> dict:
 
 @mcp.tool()
 async def open_paint() -> dict:
-    """Open Microsoft Paint maximized on secondary monitor"""
+    """Open Microsoft Paint maximized on monitor"""
     global paint_app
     try:
         paint_app = Application().start('mspaint.exe')
@@ -292,15 +304,27 @@ async def open_paint() -> dict:
         # First move to secondary monitor without specifying size
         win32gui.SetWindowPos(
             paint_window.handle,
-            win32con.HWND_TOP,
-            primary_width + 1, 0,  # Position it on secondary monitor
+            win32con.HWND_TOPMOST,
+            0, 0,  # Position it on top left of the  monitor
             0, 0,  # Let Windows handle the size
             win32con.SWP_NOSIZE  # Don't change the size
         )
         
+        time.sleep(0.2)
         # Now maximize the window
         win32gui.ShowWindow(paint_window.handle, win32con.SW_MAXIMIZE)
-        time.sleep(0.2)
+        
+        # Ensure Paint window is active
+        if not paint_window.has_focus():
+            paint_window.set_focus()
+            time.sleep(0.5)
+
+        # Bring to foreground explicitly
+        # try:
+        #     win32gui.SetForegroundWindow(paint_window.handle)
+        # except Exception:
+        #     pass
+        # time.sleep(0.2)
         
         return {
             "content": [

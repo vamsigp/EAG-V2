@@ -1,0 +1,126 @@
+Logs - v1
+
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint>
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint>
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint> py -3 talk2mcp.py
+Starting main execution...
+Establishing connection to MCP server...
+Connection established, creating session...
+Session created, initializing...
+Requesting tool list...
+Successfully retrieved 25 tools
+Creating system prompt...
+Number of tools: 25
+Added description for tool: 1. add(a: integer, b: integer) - Add two numbers
+Added description for tool: 2. add_list(l: array) - Add all numbers in a list
+Added description for tool: 3. subtract(a: integer, b: integer) - Subtract two numbers
+Added description for tool: 4. multiply(a: integer, b: integer) - Multiply two numbers
+Added description for tool: 5. divide(a: integer, b: integer) - Divide two numbers
+Added description for tool: 6. power(a: integer, b: integer) - Power of two numbers
+Added description for tool: 7. sqrt(a: integer) - Square root of a number
+Added description for tool: 8. cbrt(a: integer) - Cube root of a number
+Added description for tool: 9. factorial(a: integer) - factorial of a number
+Added description for tool: 10. log(a: integer) - log of a number
+Added description for tool: 11. remainder(a: integer, b: integer) - remainder of two numbers divison
+Added description for tool: 12. sin(a: integer) - sin of a number
+Added description for tool: 13. cos(a: integer) - cos of a number
+Added description for tool: 14. tan(a: integer) - tan of a number
+Added description for tool: 15. mine(a: integer, b: integer) - special mining tool
+Added description for tool: 16. create_thumbnail(image_path: string) - Create a thumbnail from an image
+Added description for tool: 17. strings_to_chars_to_int(string: string) - Return the ASCII values of the characters in a word
+Added description for tool: 18. int_list_to_exponential_sum(int_list: array) - Return sum of exponentials of numbers in a list
+Added description for tool: 19. fibonacci_numbers(n: integer) - Return the first n Fibonacci Numbers
+Added description for tool: 20. draw_rectangle(x1: integer, y1: integer, x2: integer, y2: integer) - Draw a rectangle in Paint from (x1,y1) to (x2,y2)
+Added description for tool: 21. add_text_in_paint(text: string) - Add text in Paint
+Added description for tool: 22. get_last_rectangle_center() - Get the center coordinates (x,y) of the last drawn rectangle
+Added description for tool: 23. add_text_in_paint_at(text: string, x: integer, y: integer) - Add text in Paint at provided canvas coordinates (x,y)
+Added description for tool: 24. add_text_inside_last_rectangle(text: string) - Create a text box constrained within the last drawn rectangle and type text     
+Added description for tool: 25. open_paint() - Open Microsoft Paint maximized on secondary monitor
+Successfully created tools description
+Created system prompt...
+Starting iteration loop...
+
+--- Iteration 1 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FUNCTION_CALL: open_paint|
+
+DEBUG: Raw function info:  open_paint|
+DEBUG: Split parts: ['open_paint', '']
+DEBUG: Function name: open_paint
+DEBUG: Raw parameters: ['']
+DEBUG: Found tool: open_paint
+DEBUG: Tool schema: {'properties': {}, 'title': 'open_paintArguments', 'type': 'object'}
+DEBUG: Schema properties: {}
+DEBUG: Final arguments: {}
+DEBUG: Calling tool open_paint
+DEBUG: Raw result: meta=None content=[TextContent(type='text', text='{\n  "content": [\n    {\n      "type": "text",\n      "text": "Paint opened successfully 
+and maximized",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}', annotations=None, meta=None)] structuredContent=None isError=False
+DEBUG: Result has content attribute
+DEBUG: Final iteration result: ['{\n  "content": [\n    {\n      "type": "text",\n      "text": "Paint opened successfully and maximized",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}']
+
+--- Iteration 2 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FUNCTION_CALL: draw_rectangle|200|200|600|400
+
+DEBUG: Raw function info:  draw_rectangle|200|200|600|400
+DEBUG: Split parts: ['draw_rectangle', '200', '200', '600', '400']
+DEBUG: Function name: draw_rectangle
+DEBUG: Raw parameters: ['200', '200', '600', '400']
+DEBUG: Found tool: draw_rectangle
+DEBUG: Tool schema: {'properties': {'x1': {'title': 'X1', 'type': 'integer'}, 'y1': {'title': 'Y1', 'type': 'integer'}, 'x2': {'title': 'X2', 'type': 'integer'}, 'y2': {'title': 'Y2', 'type': 'integer'}}, 'required': ['x1', 'y1', 'x2', 'y2'], 'title': 'draw_rectangleArguments', 'type': 'object'}
+DEBUG: Schema properties: {'x1': {'title': 'X1', 'type': 'integer'}, 'y1': {'title': 'Y1', 'type': 'integer'}, 'x2': {'title': 'X2', 'type': 'integer'}, 'y2': 
+{'title': 'Y2', 'type': 'integer'}}
+DEBUG: Converting parameter x1 with value 200 to type integer
+DEBUG: Converting parameter y1 with value 200 to type integer
+DEBUG: Converting parameter x2 with value 600 to type integer
+DEBUG: Converting parameter y2 with value 400 to type integer
+DEBUG: Final arguments: {'x1': 200, 'y1': 200, 'x2': 600, 'y2': 400}
+DEBUG: Calling tool draw_rectangle
+DEBUG: Raw result: meta=None content=[TextContent(type='text', text='{\n  "content": [\n    {\n      "type": "text",\n      "text": "Rectangle drawn from (200,200) to (600,400)",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}', annotations=None, meta=None)] structuredContent=None isError=False       
+DEBUG: Result has content attribute
+DEBUG: Final iteration result: ['{\n  "content": [\n    {\n      "type": "text",\n      "text": "Rectangle drawn from (200,200) to (600,400)",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}']
+
+--- Iteration 3 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FUNCTION_CALL: add_text_inside_last_rectangle|Hello from MCP!
+
+DEBUG: Raw function info:  add_text_inside_last_rectangle|Hello from MCP!
+DEBUG: Split parts: ['add_text_inside_last_rectangle', 'Hello from MCP!']
+DEBUG: Function name: add_text_inside_last_rectangle
+DEBUG: Raw parameters: ['Hello from MCP!']
+DEBUG: Found tool: add_text_inside_last_rectangle
+DEBUG: Tool schema: {'properties': {'text': {'title': 'Text', 'type': 'string'}}, 'required': ['text'], 'title': 'add_text_inside_last_rectangleArguments', 'type': 'object'}
+DEBUG: Schema properties: {'text': {'title': 'Text', 'type': 'string'}}
+DEBUG: Converting parameter text with value Hello from MCP! to type string
+DEBUG: Final arguments: {'text': 'Hello from MCP!'}
+DEBUG: Calling tool add_text_inside_last_rectangle
+DEBUG: Raw result: meta=None content=[TextContent(type='text', text='{\n  "content": [\n    {\n      "type": "text",\n      "text": "Text inserted inside rectangle (200,200)-(600,400)",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}', annotations=None, meta=None)] structuredContent=None isError=FalseDEBUG: Result has content attribute
+DEBUG: Final iteration result: ['{\n  "content": [\n    {\n      "type": "text",\n      "text": "Text inserted inside rectangle (200,200)-(600,400)",\n      "annotations": null,\n      "_meta": null\n    }\n  ]\n}']
+
+--- Iteration 4 ---
+Preparing to generate LLM response...
+Starting LLM generation...
+LLM generation completed
+LLM Response: FINAL_ANSWER: done
+
+=== Agent Execution Complete ===
+PS C:\Users\Vamsi\Documents\GitHub\EAG-V2\MCP-Intro\mcp_assignment_paint>                             
+
+
+
+
+
+
+
+
+
+
+
+
+

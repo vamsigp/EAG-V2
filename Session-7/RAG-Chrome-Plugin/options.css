@@ -1,0 +1,305 @@
+/* Options page styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f5f5f5;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 32px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 28px;
+    font-weight: 600;
+}
+
+main {
+    padding: 32px;
+}
+
+.settings-section {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.settings-section h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+}
+
+.description {
+    color: #666;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+/* Domain management */
+.domain-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.default-domains h3,
+.custom-domains h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #555;
+}
+
+.add-domain {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.add-domain input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.add-domain button {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.domain-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.domain-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    color: #495057;
+}
+
+.domain-tag.default {
+    background: #e3f2fd;
+    border-color: #bbdefb;
+    color: #1976d2;
+}
+
+.domain-tag .remove-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    margin-left: 4px;
+}
+
+/* Settings groups */
+.setting-group {
+    margin-bottom: 24px;
+}
+
+.setting-group label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+    color: #333;
+    gap: 6px;
+}
+
+.setting-group input[type="number"] {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    max-width: 150px;
+}
+
+.checkbox-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+}
+
+.setting-description {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+    font-weight: normal;
+}
+
+/* Storage info */
+.storage-info {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.storage-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.storage-stat:last-child {
+    border-bottom: none;
+}
+
+.storage-stat .label {
+    font-weight: 500;
+    color: #555;
+}
+
+/* Action buttons */
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.primary-btn {
+    background: #667eea;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #5a6fd8;
+}
+
+.secondary-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #5a6268;
+}
+
+.danger-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.danger-btn:hover {
+    background: #c82333;
+}
+
+.backup-info {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.backup-info p {
+    margin-bottom: 4px;
+}
+
+/* Footer */
+footer {
+    background: #f8f9fa;
+    padding: 24px 32px;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.save-status {
+    font-size: 14px;
+    color: #666;
+}
+
+.save-status.success {
+    color: #28a745;
+}
+
+.save-status.error {
+    color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .container {
+        margin: 0;
+        box-shadow: none;
+    }
+
+    header,
+    main,
+    footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .add-domain {
+        flex-direction: column;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+}

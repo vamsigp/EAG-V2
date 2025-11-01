@@ -1,0 +1,30 @@
+{
+    "name": "rag-chrome-plugin",
+    "version": "1.0.0",
+    "description": "Chrome extension that builds embeddings and FAISS index for visited web pages",
+    "keywords": [
+        "chrome-extension",
+        "embeddings",
+        "faiss",
+        "semantic-search",
+        "rag",
+        "tensorflow"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/rag-chrome-plugin"
+    },
+    "scripts": {
+        "build": "echo 'No build process needed - extension runs from source'",
+        "lint": "echo 'Add linting tools here if needed'",
+        "test": "echo 'Add testing framework here if needed'"
+    },
+    "devDependencies": {
+        "eslint": "^8.0.0"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
+}

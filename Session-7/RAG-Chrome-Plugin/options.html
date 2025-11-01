@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Web Indexer - Options</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 RAG Web Indexer Settings</h1>
+        </header>
+
+        <main>
+            <section class="settings-section">
+                <h2>Excluded Domains</h2>
+                <p class="description">
+                    Add domains that should be excluded from indexing. These sites will never be processed by the
+                    extension.
+                </p>
+
+                <div class="domain-list">
+                    <div class="default-domains">
+                        <h3>Default Excluded Domains (Cannot be removed)</h3>
+                        <div class="domain-tags" id="defaultDomains">
+                            <!-- Default domains will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="custom-domains">
+                        <h3>Custom Excluded Domains</h3>
+                        <div class="add-domain">
+                            <input type="text" id="domainInput" placeholder="example.com" />
+                            <button id="addDomainBtn">Add Domain</button>
+                        </div>
+                        <div class="domain-tags" id="customDomains">
+                            <!-- Custom domains will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>Processing Settings</h2>
+
+                <div class="setting-group">
+                    <label for="minContentLength">
+                        Minimum Content Length (characters)
+                        <input type="number" id="minContentLength" min="50" max="5000" value="200" />
+                    </label>
+                    <p class="setting-description">Pages with less content will be ignored</p>
+                </div>
+
+                <div class="setting-group">
+                    <label for="maxContentLength">
+                        Maximum Content Length (characters)
+                        <input type="number" id="maxContentLength" min="1000" max="50000" value="10000" />
+                    </label>
+                    <p class="setting-description">Content will be truncated to this length</p>
+                </div>
+
+                <div class="setting-group">
+                    <label for="processingDelay">
+                        Processing Delay (seconds)
+                        <input type="number" id="processingDelay" min="1" max="10" value="2" />
+                    </label>
+                    <p class="setting-description">Wait time before processing page content</p>
+                </div>
+
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enableSPADetection" checked />
+                        Enable SPA (Single Page Application) Detection
+                    </label>
+                    <p class="setting-description">Automatically detect and index content changes in SPAs</p>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>Storage & Performance</h2>
+
+                <div class="storage-info">
+                    <div class="storage-stat">
+                        <span class="label">Total Indexed Pages:</span>
+                        <span id="totalPages">-</span>
+                    </div>
+                    <div class="storage-stat">
+                        <span class="label">Storage Used:</span>
+                        <span id="storageUsed">-</span>
+                    </div>
+                    <div class="storage-stat">
+                        <span class="label">Model Status:</span>
+                        <span id="modelStatus">-</span>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="maxIndexSize">
+                        Maximum Index Size (pages)
+                        <input type="number" id="maxIndexSize" min="100" max="10000" value="1000" />
+                    </label>
+                    <p class="setting-description">Oldest pages will be removed when limit is reached</p>
+                </div>
+
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="enableAutoCleanup" checked />
+                        Enable Automatic Cleanup
+                    </label>
+                    <p class="setting-description">Automatically remove old entries when storage limit is reached</p>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>Data Management</h2>
+
+                <div class="action-buttons">
+                    <button id="exportDataBtn" class="secondary-btn">Export Data</button>
+                    <button id="importDataBtn" class="secondary-btn">Import Data</button>
+                    <button id="clearAllBtn" class="danger-btn">Clear All Data</button>
+                </div>
+
+                <input type="file" id="importFileInput" accept=".json" style="display: none;" />
+
+                <div class="backup-info">
+                    <p><strong>Export:</strong> Download your indexed data as a JSON file</p>
+                    <p><strong>Import:</strong> Restore data from a previously exported file</p>
+                    <p><strong>Clear:</strong> Permanently delete all indexed pages and settings</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="save-status" id="saveStatus"></div>
+            <button id="saveBtn" class="primary-btn">Save Settings</button>
+        </footer>
+    </div>
+
+    <script src="options.js"></script>
+</body>
+
+</html>

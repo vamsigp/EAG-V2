@@ -1,0 +1,61 @@
+{
+    "manifest_version": 3,
+    "name": "RAG Web Indexer",
+    "version": "1.0.0",
+    "description": "Automatically builds embeddings and FAISS index for visited web pages",
+    "permissions": [
+        "storage",
+        "activeTab",
+        "scripting",
+        "unlimitedStorage"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle",
+            "exclude_matches": [
+                "*://mail.google.com/*",
+                "*://gmail.com/*",
+                "*://web.whatsapp.com/*",
+                "*://accounts.google.com/*",
+                "*://login.microsoftonline.com/*",
+                "*://github.com/login/*",
+                "*://*/login*",
+                "*://*/signin*",
+                "*://*/auth*"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "RAG Web Indexer"
+    },
+    "options_page": "options.html",
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "models/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Web Indexer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 RAG Web Indexer</h1>
+            <div class="stats">
+                <span id="indexCount">0</span> pages indexed
+            </div>
+        </header>
+
+        <div class="search-section">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search indexed pages..." />
+                <button id="searchBtn">Search</button>
+            </div>
+            <div class="search-options">
+                <label>
+                    <input type="number" id="topK" value="5" min="1" max="20" />
+                    results
+                </label>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="search">Search Results</button>
+            <button class="tab-btn" data-tab="recent">Recent Pages</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <div class="tab-content" id="searchTab">
+            <div id="searchResults" class="results-container">
+                <div class="no-results">
+                    Enter a search query to find similar pages
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="recentTab">
+            <div id="recentPages" class="results-container">
+                <div class="loading">Loading recent pages...</div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="settingsTab">
+            <div class="settings-container">
+                <div class="setting-item">
+                    <h3>Index Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <span class="stat-label">Total Pages:</span>
+                            <span id="totalPages">-</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Model Status:</span>
+                            <span id="modelStatus">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <h3>Actions</h3>
+                    <button id="clearIndex" class="danger-btn">Clear All Data</button>
+                    <p class="warning">⚠️ This will permanently delete all indexed pages</p>
+                </div>
+
+                <div class="setting-item">
+                    <h3>About</h3>
+                    <p>RAG Web Indexer automatically creates embeddings for web pages you visit and builds a searchable
+                        index.</p>
+                    <p>Version: 1.0.0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

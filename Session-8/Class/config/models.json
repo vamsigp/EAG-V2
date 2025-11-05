@@ -10,7 +10,7 @@
       "embedding_model": "models/embedding-001",
       "api_key_env": "GEMINI_API_KEY"
     },
-    "phi4": {
+    "phi4": { 
       "type": "ollama",
       "model": "phi4",
       "embedding_model": "phi4",

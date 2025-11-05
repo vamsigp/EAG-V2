@@ -1,0 +1,21 @@
+{
+  "update_id": 249467259,
+  "message": {
+    "message_id": 8,
+    "from": {
+      "id": 7237573607,
+      "is_bot": false,
+      "first_name": "Vamsi",
+      "last_name": "Krishna",
+      "language_code": "en"
+    },
+    "chat": {
+      "id": 7237573607,
+      "first_name": "Vamsi",
+      "last_name": "Krishna",
+      "type": "private"
+    },
+    "date": 1762362933,
+    "text": "Find the Current Point Standings of F1 Racers\", then put that into a Google Excel Sheet"
+  }
+}
